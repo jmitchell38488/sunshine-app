@@ -1,12 +1,18 @@
 package com.example.android.sunshine.app.sync;
 
+import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 
 import com.example.android.sunshine.app.BuildConfig;
+import com.example.android.sunshine.app.data.WeatherContract;
+import com.example.android.sunshine.app.data.WeatherProvider;
+import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.util.WeatherDataParser;
 import com.example.android.sunshine.app.data.model.WeatherModel;
 
@@ -159,5 +165,58 @@ public class FetchWeatherTask extends AsyncTask<String, Void, WeatherModel[]> {
         }
 
         return forecastJsonStr;
+    }
+
+    public long addLocation(LocationModel locationModel) {
+        return this.addLocation(locationModel.getLocationSetting(), locationModel.getCityName(),
+                locationModel.getCoordLat(), locationModel.getCoordLong());
+    }
+
+    public long addLocation(String locationSetting, String cityName, double lat, double lon) {
+        long locationId;
+
+        Cursor locationCursor = getContext().getContentResolver().query(
+                WeatherContract.LocationEntry.CONTENT_URI,
+                new String[] {WeatherContract.LocationEntry._ID},
+                WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ?",
+                new String[]{locationSetting},
+                null
+        );
+
+        // Check if there's a result by attempting to load the first result
+        if (locationCursor.moveToFirst()) {
+            int locationIdIndex = locationCursor.getColumnIndex(WeatherContract.LocationEntry._ID);
+            locationId = locationCursor.getLong(locationIdIndex);
+
+        // No result, insert then return insert_id
+        } else {
+            // Create content values array
+            ContentValues locationValues = new ContentValues();
+
+            // Load the data
+            locationValues.put(WeatherContract.LocationEntry.COLUMN_CITY_NAME, cityName);
+            locationValues.put(WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING, locationSetting);
+            locationValues.put(WeatherContract.LocationEntry.COLUMN_COORD_LAT, lat);
+            locationValues.put(WeatherContract.LocationEntry.COLUMN_COORD_LONG, lon);
+
+            // Insert the data
+            Uri insertedUri = getContext().getContentResolver().insert(
+                    WeatherContract.LocationEntry.CONTENT_URI,
+                    locationValues
+            );
+
+            // The resulting URI contains the ID for the row.  Extract the locationId from the Uri.
+            locationId = ContentUris.parseId(insertedUri);
+        }
+
+        // Close connection
+        locationCursor.close();
+
+        // Return!
+        return locationId;
+    }
+
+    public Context getContext() {
+        return context;
     }
 }

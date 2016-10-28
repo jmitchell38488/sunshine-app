@@ -2,6 +2,7 @@ package com.example.android.sunshine.app.util;
 
 import android.text.format.Time;
 
+import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.data.model.WeatherModel;
 
 import org.json.JSONArray;
@@ -100,7 +101,28 @@ public class WeatherDataParser {
         return weatherItems;
     }
 
+    public LocationModel fetchLocationData(String locationSetting) throws JSONException {
+        final String OWM_CITY = "city";
+        final String OWM_COORD = "coord";
 
+        final String OWM_ID = "id";
+        final String OWM_CITY_NAME = "city_name";
+        final String OWM_COORD_LAT = "lat";
+        final String OWM_COORD_LON = "lon";
+
+        JSONObject location = forecastJson.getJSONObject(OWM_CITY);
+        JSONObject coords = location.getJSONObject(OWM_COORD);
+
+        LocationModel model = new LocationModel();
+
+        model.setId(location.getInt(OWM_ID));
+        model.setCityName(location.getString(OWM_CITY_NAME));
+        model.setCoordLat(coords.getDouble(OWM_COORD_LAT));
+        model.setCoordLong(coords.getDouble(OWM_COORD_LON));
+        model.setLocationSetting(locationSetting);
+
+        return model;
+    }
 
     /* The date/time conversion code is going to be moved outside the asynctask later,
      * so for convenience we're breaking it out into its own method now.

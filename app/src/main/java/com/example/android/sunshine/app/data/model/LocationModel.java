@@ -18,16 +18,16 @@ public class LocationModel {
     private String cityName;
 
     // coord_lat
-    private long coordLat;
+    private double coordLat;
 
     // coord_long
-    private long coordLong;
+    private double coordLong;
 
     public LocationModel() {
         // Do nothing
     }
 
-    public LocationModel(int id, String locationSetting, String cityName, long coordLat, long coordLong) {
+    public LocationModel(int id, String locationSetting, String cityName, double coordLat, double coordLong) {
         this.id = id;
         this.locationSetting = locationSetting;
         this.cityName = cityName;
@@ -59,19 +59,19 @@ public class LocationModel {
         this.cityName = cityName;
     }
 
-    public long getCoordLat() {
+    public double getCoordLat() {
         return coordLat;
     }
 
-    public void setCoordLat(long coordLat) {
+    public void setCoordLat(double coordLat) {
         this.coordLat = coordLat;
     }
 
-    public long getCoordLong() {
+    public double getCoordLong() {
         return coordLong;
     }
 
-    public void setCoordLong(long coordLong) {
+    public void setCoordLong(double coordLong) {
         this.coordLong = coordLong;
     }
 }
