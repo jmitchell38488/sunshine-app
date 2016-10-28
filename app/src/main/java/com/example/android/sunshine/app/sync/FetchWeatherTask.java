@@ -1,4 +1,4 @@
-package com.example.android.sunshine.app.task;
+package com.example.android.sunshine.app.sync;
 
 import android.content.Context;
 import android.net.Uri;
@@ -8,7 +8,7 @@ import android.widget.ArrayAdapter;
 
 import com.example.android.sunshine.app.BuildConfig;
 import com.example.android.sunshine.app.util.WeatherDataParser;
-import com.example.android.sunshine.app.util.WeatherModel;
+import com.example.android.sunshine.app.data.model.WeatherModel;
 
 import org.json.JSONException;
 
@@ -46,7 +46,42 @@ public class FetchWeatherTask extends AsyncTask<String, Void, WeatherModel[]> {
         this.unitType = unitType;
     }
 
+    /**
+     * Method to perform the fetch and update in the background thread
+     * @param params
+     * @return
+     */
     protected WeatherModel[] doInBackground(String... params) {
+        try {
+            String forecastJsonStr = fetchRawJsonFromUrl(params);
+            WeatherDataParser weatherParser = new WeatherDataParser(forecastJsonStr);
+            return weatherParser.fetchWeatherData(numDays);
+        } catch (JSONException e) {
+            Log.e(LOG_TAG, e.getMessage(), e);
+            e.printStackTrace();
+        }
+
+        // This will only happen if there was an error getting or parsing the forecast.
+        return null;
+    }
+
+    @Override
+    protected void onPostExecute(WeatherModel[] items) {
+        if (items != null) {
+            mForecastAdapter.clear();
+            for (WeatherModel item : items) {
+                mForecastAdapter.add(item.getFormattedString(unitType, context));
+            }
+            mForecastAdapter.notifyDataSetChanged();
+        }
+    }
+
+    /**
+     * Helper method to fetch the raw JSON data from the Open Weather API
+     * @param params
+     * @return
+     */
+    protected String fetchRawJsonFromUrl(String... params) {
         // These two need to be declared outside the try/catch
         // so that they can be closed in the finally block.
         HttpURLConnection urlConnection = null;
@@ -123,26 +158,6 @@ public class FetchWeatherTask extends AsyncTask<String, Void, WeatherModel[]> {
             }
         }
 
-        try {
-            WeatherDataParser weatherParser = new WeatherDataParser(forecastJsonStr);
-            return weatherParser.fetchWeatherData(numDays);
-        } catch (JSONException e) {
-            Log.e(LOG_TAG, e.getMessage(), e);
-            e.printStackTrace();
-        }
-
-        // This will only happen if there was an error getting or parsing the forecast.
-        return null;
-    }
-
-    @Override
-    protected void onPostExecute(WeatherModel[] items) {
-        if (items != null) {
-            mForecastAdapter.clear();
-            for (WeatherModel item : items) {
-                mForecastAdapter.add(item.getFormattedString(unitType, context));
-            }
-            mForecastAdapter.notifyDataSetChanged();
-        }
+        return forecastJsonStr;
     }
 }

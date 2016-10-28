@@ -2,6 +2,8 @@ package com.example.android.sunshine.app.util;
 
 import android.text.format.Time;
 
+import com.example.android.sunshine.app.data.model.WeatherModel;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,9 +39,14 @@ public class WeatherDataParser {
         final String OWM_LIST = "list";
         final String OWM_WEATHER = "weather";
         final String OWM_TEMPERATURE = "temp";
-        final String OWM_MAX = "max";
-        final String OWM_MIN = "min";
-        final String OWM_DESCRIPTION = "main";
+        final String OWM_WEATHER_ID = "id";
+        final String OWM_WEATHER_DESC = "main";
+        final String OWM_TEMP_MIN = "min";
+        final String OWM_TEMP_MAX = "max";
+        final String OWM_PRESSURE = "pressure";
+        final String OWM_HUMIDITY = "humidity";
+        final String OWM_WIND_SPEED = "speed";
+        final String OWM_WIND_DIR = "deg";
 
         JSONArray weatherArray = forecastJson.getJSONArray(OWM_LIST);
 
@@ -62,37 +69,38 @@ public class WeatherDataParser {
 
         WeatherModel[] weatherItems = new WeatherModel[numDays];
         for(int i = 0; i < weatherArray.length(); i++) {
-            // For now, using the format "Day, description, hi/low"
-            String day;
-            String description;
-            String highAndLow;
+            // initialize
+            long dateTime;
+            WeatherModel model = new WeatherModel();
+
+            // Update the date
+            dateTime = dayTime.setJulianDay(julianStartDay+i);
+            model.setDate(dateTime);
 
             // Get the JSON object representing the day
             JSONObject dayForecast = weatherArray.getJSONObject(i);
-
-            // The date/time is returned as a long.  We need to convert that
-            // into something human-readable, since most people won't read "1400356800" as
-            // "this saturday".
-            long dateTime;
-            // Cheating to convert this to UTC time, which is what we want anyhow
-            dateTime = dayTime.setJulianDay(julianStartDay+i);
-            day = getReadableDateString(dateTime);
-
-            // description is in a child array called "weather", which is 1 element long.
             JSONObject weatherObject = dayForecast.getJSONArray(OWM_WEATHER).getJSONObject(0);
-            description = weatherObject.getString(OWM_DESCRIPTION);
+            JSONObject tempObject = dayForecast.getJSONObject(OWM_TEMPERATURE);
 
-            // Temperatures are in a child object called "temp".  Try not to name variables
-            // "temp" when working with temperature.  It confuses everybody.
-            JSONObject temperatureObject = dayForecast.getJSONObject(OWM_TEMPERATURE);
-            double high = temperatureObject.getDouble(OWM_MAX);
-            double low = temperatureObject.getDouble(OWM_MIN);
+            // Update Weather Model
+            model.setId(0);
+            model.setLocationId(0);
+            model.setWeatherId(weatherObject.getInt(OWM_WEATHER_ID));
+            model.setShortDesc(weatherObject.getString(OWM_WEATHER_DESC));
+            model.setMin(tempObject.getDouble(OWM_TEMP_MIN));
+            model.setMax(tempObject.getDouble(OWM_TEMP_MAX));
+            model.setHumidity(dayForecast.getDouble(OWM_HUMIDITY));
+            model.setPressure(dayForecast.getDouble(OWM_PRESSURE));
+            model.setWind(dayForecast.getDouble(OWM_WIND_SPEED));
+            model.setDegrees(dayForecast.getInt(OWM_WIND_DIR));
 
-            weatherItems[i] = new WeatherModel(day, description, low, high);
+            weatherItems[i] = model;
         }
 
         return weatherItems;
     }
+
+
 
     /* The date/time conversion code is going to be moved outside the asynctask later,
      * so for convenience we're breaking it out into its own method now.

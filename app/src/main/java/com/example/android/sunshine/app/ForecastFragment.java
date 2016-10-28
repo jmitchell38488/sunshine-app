@@ -1,6 +1,5 @@
 package com.example.android.sunshine.app;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -16,14 +15,10 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
-import com.example.android.sunshine.app.task.FetchWeatherTask;
+import com.example.android.sunshine.app.sync.FetchWeatherTask;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Created by justinmitchell on 25/10/2016.
