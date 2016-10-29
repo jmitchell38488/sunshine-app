@@ -32,6 +32,40 @@ public class WeatherContract {
         return time.setJulianDay(julianDay);
     }
 
+    public static final String[] FORECAST_COLUMNS = {
+            WeatherContract.WeatherEntry.TABLE_NAME + "." + WeatherContract.WeatherEntry._ID,
+            WeatherContract.WeatherEntry.COLUMN_LOC_KEY,
+            WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
+            WeatherContract.WeatherEntry.COLUMN_DATE,
+            WeatherContract.WeatherEntry.COLUMN_SHORT_DESC,
+            WeatherContract.WeatherEntry.COLUMN_MIN_TEMP,
+            WeatherContract.WeatherEntry.COLUMN_MAX_TEMP,
+            WeatherContract.WeatherEntry.COLUMN_HUMIDITY,
+            WeatherContract.WeatherEntry.COLUMN_PRESSURE,
+            WeatherContract.WeatherEntry.COLUMN_WIND_SPEED,
+            WeatherContract.WeatherEntry.COLUMN_DEGREES,
+            WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING,
+            WeatherContract.LocationEntry.COLUMN_CITY_NAME,
+            WeatherContract.LocationEntry.COLUMN_COORD_LAT,
+            WeatherContract.LocationEntry.COLUMN_COORD_LONG
+    };
+
+    public static final int COL_WEATHER_ID = 0;
+    public static final int COL_WEATHER_LOC_KEY = 1;
+    public static final int COL_WEATHER_WEATHER_ID = 2;
+    public static final int COL_WEATHER_DATE = 3;
+    public static final int COL_WEATHER_SHORT_DESC = 4;
+    public static final int COL_WEATHER_MIN_TEMP = 5;
+    public static final int COL_WEATHER_MAX_TEMP = 6;
+    public static final int COL_WEATHER_HUMIDITY = 7;
+    public static final int COL_WEATHER_PRESSURE = 8;
+    public static final int COL_WEATHER_WIND_SPEED = 9;
+    public static final int COL_WEATHER_DEGREES = 10;
+    public static final int COL_LOCATION_SETTING = 11;
+    public static final int COL_LOCATION_CITY_NAME = 12;
+    public static final int COL_LOCATION_COORD_LAT = 13;
+    public static final int COL_LOCATION_COORD_LONG = 14;
+
     /*
         Inner class that defines the table contents of the location table
         Students: This is where you will add the strings.  (Similar to what has been

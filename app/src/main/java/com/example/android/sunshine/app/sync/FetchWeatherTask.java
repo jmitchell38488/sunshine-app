@@ -45,7 +45,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, WeatherModel[]> {
     private final String DAYS_PARAM = "cnt";
     private final String API_KEY = "APPID";
 
-    private final int numDays = 7;
+    private final int numDays = 14;
 
     public FetchWeatherTask(Context context) {
         this.context = context;
@@ -59,6 +59,11 @@ public class FetchWeatherTask extends AsyncTask<String, Void, WeatherModel[]> {
     protected WeatherModel[] doInBackground(String... params) {
         try {
             String forecastJsonStr = fetchRawJsonFromUrl(params);
+
+            if (forecastJsonStr == null || forecastJsonStr.isEmpty()) {
+                throw new JSONException("Could not parse JSON content, no response data");
+            }
+
             WeatherDataParser weatherParser = new WeatherDataParser(forecastJsonStr);
 
             // Convert the records to objects

@@ -172,9 +172,8 @@ public class WeatherModel {
                 .equals(context.getString(R.string.pref_units_metric));
     }
 
-    public String formatDate(long dateInMilliseconds) {
-        Date date = new Date(dateInMilliseconds);
-        return DateFormat.getDateInstance().format(date);
+    public String formatDate() {
+        return DateFormat.getDateInstance().format(new Date(dateTime));
     }
 
     public String getFormattedWind(Context context) {
