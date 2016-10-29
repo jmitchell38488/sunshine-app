@@ -46,7 +46,7 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor> 
 
         MenuItem menuItem = menu.findItem(R.id.action_share);
 
-        ShareActionProvider mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
 
         if (mShareActionProvider != null) {
             mShareActionProvider.setShareIntent(createShareForecastIntent());
@@ -71,7 +71,7 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor> 
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
         shareIntent.setType("text/plain");
-        shareIntent.putExtra(Intent.EXTRA_TEXT, mForecastStr + FORECAST_SHARE_HASHTAG);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, (mForecastStr != null ? mForecastStr : "") + FORECAST_SHARE_HASHTAG);
 
         return shareIntent;
     }
