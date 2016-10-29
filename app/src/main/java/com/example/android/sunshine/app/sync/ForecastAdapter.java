@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.android.sunshine.app.ForecastFragment;
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.model.WeatherModel;
 import com.example.android.sunshine.app.util.Utility;
@@ -61,7 +62,18 @@ public class ForecastAdapter extends CursorAdapter {
         boolean isMetric = Utility.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
 
         // Set icon
-        listItemViewHolder.iconView.setImageResource(Utility.getIconResourceForWeatherCondition((int) weatherModel.getWeatherId()));
+        int viewType = getItemViewType(cursor.getPosition());
+
+        switch (viewType) {
+            case VIEW_TYPE_TODAY: {
+                listItemViewHolder.iconView.setImageResource(Utility.getArtResourceForWeatherCondition((int) weatherModel.getWeatherId()));
+                break;
+            }
+            case VIEW_TYPE_FUTURE_DAY: {
+                listItemViewHolder.iconView.setImageResource(Utility.getIconResourceForWeatherCondition((int) weatherModel.getWeatherId()));
+                break;
+            }
+        }
 
         // Set date
         listItemViewHolder.dateView.setText(weatherModel.getFriendlyDayString(context));
