@@ -119,6 +119,7 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor> 
         WeatherModel weatherModel = new WeatherModel();
         weatherModel.loadFromCursor(cursor);
 
+        long weatherId = weatherModel.getWeatherId();
         DetailsViewHolder viewHolder = (DetailsViewHolder) getView().getTag();
         Context context = getActivity();
         boolean isMetric = Utility.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
@@ -127,7 +128,7 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor> 
         mForecastStr = weatherModel.getFormattedString(Utility.getUnitType(context), context);
 
         // Set icon
-        viewHolder.iconView.setImageResource(R.drawable.ic_launcher);
+        viewHolder.iconView.setImageResource(Utility.getArtResourceForWeatherCondition((int) weatherModel.getWeatherId()));
 
         // Set day
         viewHolder.dayView.setText(weatherModel.getDayName(context));

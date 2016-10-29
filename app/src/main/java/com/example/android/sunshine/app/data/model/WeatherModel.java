@@ -30,13 +30,13 @@ public class WeatherModel {
     private int id;
 
     // location_id
-    private float locationId;
+    private long locationId;
 
     // dateTime
     private long dateTime;
 
     // weather_id
-    private float weatherId;
+    private long weatherId;
 
     // short_desc
     private String description;
@@ -63,7 +63,7 @@ public class WeatherModel {
         // Do nothing
     }
 
-    public WeatherModel(int id, float locationId, int dateTime, float weatherId, String description, double low,
+    public WeatherModel(int id, long locationId, int dateTime, long weatherId, String description, double low,
                         double high, double humidity, double pressure, double windSpeed, double windDirection) {
         this.id = id;
         this.locationId = locationId;
@@ -86,11 +86,11 @@ public class WeatherModel {
         this.id = id;
     }
 
-    public float getLocationId() {
+    public long getLocationId() {
         return locationId;
     }
 
-    public void setLocationId(float locationId) {
+    public void setLocationId(long locationId) {
         this.locationId = locationId;
     }
 
@@ -102,11 +102,11 @@ public class WeatherModel {
         this.dateTime = dateTime;
     }
 
-    public float getWeatherId() {
+    public long getWeatherId() {
         return weatherId;
     }
 
-    public void setWeatherId(float weatherId) {
+    public void setWeatherId(long weatherId) {
         this.weatherId = weatherId;
     }
 

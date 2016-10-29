@@ -61,7 +61,7 @@ public class ForecastAdapter extends CursorAdapter {
         boolean isMetric = Utility.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
 
         // Set icon
-        listItemViewHolder.iconView.setImageResource(R.drawable.ic_launcher);
+        listItemViewHolder.iconView.setImageResource(Utility.getIconResourceForWeatherCondition((int) weatherModel.getWeatherId()));
 
         // Set date
         listItemViewHolder.dateView.setText(weatherModel.getFriendlyDayString(context));
