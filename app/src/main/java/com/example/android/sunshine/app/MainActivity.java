@@ -10,21 +10,28 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.example.android.sunshine.app.util.Utility;
+
 
 public class MainActivity extends AppCompatActivity {
 
     private final String LOG_TAG = MainActivity.class.getSimpleName();
+    private final String FORECASTFRAGMENT_TAG = "FFTAG";
+
+    private String mLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mLocation = Utility.getPreferredLocation(this);
 
         Log.d(LOG_TAG, "Action: onCreate");
 
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new ForecastFragment())
+                    .add(R.id.container, new ForecastFragment(), FORECASTFRAGMENT_TAG)
                     .commit();
         }
     }
@@ -98,7 +105,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(LOG_TAG, "Action: onResume");
+        String location = Utility.getPreferredLocation(this);
+
+        // Trigger an onLocationChanged() action in the ForecastFragment if the location string is changed
+        if (location != null && !location.equals(mLocation)) {
+            ForecastFragment ff = (ForecastFragment) getSupportFragmentManager().findFragmentByTag(FORECASTFRAGMENT_TAG);
+            if (ff != null) {
+                ff.onLocationChanged();
+            }
+
+            mLocation = location;
+        }
     }
 
     @Override

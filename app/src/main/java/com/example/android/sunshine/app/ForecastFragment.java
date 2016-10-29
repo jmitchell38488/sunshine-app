@@ -36,6 +36,8 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     private final String LOG_TAG = ForecastFragment.class.getSimpleName();
 
+    private String FORECASTFRAGMENT_TAG;
+
     private static final int FORECAST_LOADER = 0;
     private ForecastAdapter mForecastAdapter;
 
@@ -70,12 +72,6 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        updateWeather();
     }
 
     private void updateWeather() {
@@ -157,4 +153,13 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         mForecastAdapter.swapCursor(null);
     }
 
+    /**
+     * Helper method to handle location changes, make sure we fetch the weather when the location
+     * changes since we read the location when we create the loader, all we need to do is restart
+     * things
+     */
+    public void onLocationChanged( ) {
+        updateWeather();
+        getLoaderManager().restartLoader(FORECAST_LOADER, null, this);
+    }
 }
