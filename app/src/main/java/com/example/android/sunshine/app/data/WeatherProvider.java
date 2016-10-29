@@ -65,7 +65,7 @@ public class WeatherProvider extends ContentProvider {
 
             // "location"
             case LOCATION: {
-                retCursor = weatherStorage.getWeather(projection, selection, selectionArgs, sortOrder);
+                retCursor = weatherStorage.getLocation(projection, selection, selectionArgs, sortOrder);
                 break;
             }
 

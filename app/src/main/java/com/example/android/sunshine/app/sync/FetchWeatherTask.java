@@ -4,14 +4,15 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.ArrayAdapter;
+import android.support.v4.widget.CursorAdapter;
 
 import com.example.android.sunshine.app.BuildConfig;
 import com.example.android.sunshine.app.data.WeatherContract;
-import com.example.android.sunshine.app.data.WeatherProvider;
 import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.util.WeatherDataParser;
 import com.example.android.sunshine.app.data.model.WeatherModel;
@@ -24,6 +25,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.StringTokenizer;
+import java.util.Vector;
 
 /**
  * Created by justinmitchell on 25/10/2016.
@@ -33,9 +36,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, WeatherModel[]> {
 
     private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
-    private final ArrayAdapter<String> mForecastAdapter;
     private final Context context;
-    private final String unitType;
 
     private final String FORECAST_BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily";
     private final String QUERY_PARAM = "q";
@@ -46,10 +47,8 @@ public class FetchWeatherTask extends AsyncTask<String, Void, WeatherModel[]> {
 
     private final int numDays = 7;
 
-    public FetchWeatherTask(ArrayAdapter<String> mForecastAdapter, String unitType, Context context) {
-        this.mForecastAdapter = mForecastAdapter;
+    public FetchWeatherTask(Context context) {
         this.context = context;
-        this.unitType = unitType;
     }
 
     /**
@@ -61,8 +60,25 @@ public class FetchWeatherTask extends AsyncTask<String, Void, WeatherModel[]> {
         try {
             String forecastJsonStr = fetchRawJsonFromUrl(params);
             WeatherDataParser weatherParser = new WeatherDataParser(forecastJsonStr);
-            return weatherParser.fetchWeatherData(numDays);
+
+            // Convert the records to objects
+            WeatherModel[] weatherItems = weatherParser.convertWeatherData();
+            LocationModel locationItem = weatherParser.convertLocationData(params[0]);
+
+            // Save location to data store
+            long locationId = addLocation(locationItem);
+
+            // Update weather models with location id
+            for (WeatherModel item : weatherItems) {
+                item.setLocationId(locationId);
+            }
+
+            // Save weather items to the data store
+            addWeatherItems(weatherItems);
         } catch (JSONException e) {
+            Log.e(LOG_TAG, e.getMessage(), e);
+            e.printStackTrace();
+        } catch (IOException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
             e.printStackTrace();
         }
@@ -71,15 +87,61 @@ public class FetchWeatherTask extends AsyncTask<String, Void, WeatherModel[]> {
         return null;
     }
 
-    @Override
-    protected void onPostExecute(WeatherModel[] items) {
-        if (items != null) {
-            mForecastAdapter.clear();
-            for (WeatherModel item : items) {
-                mForecastAdapter.add(item.getFormattedString(unitType, context));
-            }
-            mForecastAdapter.notifyDataSetChanged();
+    private WeatherModel[] fetchWeatherItemsFromContentProvider(String locationSetting) {
+        // Sort order:  Ascending, by date.
+        String sortOrder = WeatherContract.WeatherEntry.COLUMN_DATE + " ASC";
+        Uri weatherForLocationUri = WeatherContract.WeatherEntry.buildWeatherLocationWithStartDate(
+                locationSetting, System.currentTimeMillis());
+
+        // Fetch the items from the context provider
+        Cursor cursor = getContext().getContentResolver().query(
+                weatherForLocationUri,
+                null,
+                null,
+                null,
+                sortOrder
+        );
+
+        WeatherModel[] weatherModels;
+
+        try {
+            weatherModels = convertWeatherCursorToWeatherModels(cursor);
+        } catch (IOException e) {
+            weatherModels = new WeatherModel[]{};
+        } finally {
+            cursor.close();
         }
+
+        return weatherModels;
+    }
+
+    private WeatherModel[] convertWeatherCursorToWeatherModels(Cursor weatherCursor) throws IOException {
+        if (weatherCursor == null) {
+            throw new IOException("Cannot convert cursor to WeatherModels");
+        }
+
+        WeatherModel[] weatherModels = new WeatherModel[weatherCursor.getCount()];
+
+        if (weatherCursor.getCount() == 0 || !weatherCursor.moveToFirst()) {
+            return weatherModels;
+        }
+
+        int i = 0;
+        do {
+            // Convert cursor to ContentValues
+            ContentValues cValues = new ContentValues();
+            DatabaseUtils.cursorRowToContentValues(weatherCursor, cValues);
+
+            // Convert ContentValues to WeatherModel
+            WeatherModel model = new WeatherModel();
+            model.loadFromContentValues(cValues);
+
+            // Add to the array
+            weatherModels[i] = model;
+            i++;
+        } while (weatherCursor.moveToNext());
+
+        return weatherModels;
     }
 
     /**
@@ -168,8 +230,16 @@ public class FetchWeatherTask extends AsyncTask<String, Void, WeatherModel[]> {
     }
 
     public long addLocation(LocationModel locationModel) {
-        return this.addLocation(locationModel.getLocationSetting(), locationModel.getCityName(),
-                locationModel.getCoordLat(), locationModel.getCoordLong());
+        long locationId =  this.addLocation(
+                locationModel.getLocationSetting(),
+                locationModel.getCityName(),
+                locationModel.getCoordLat(),
+                locationModel.getCoordLong()
+        );
+
+        locationModel.setId(locationId);
+
+        return locationId;
     }
 
     public long addLocation(String locationSetting, String cityName, double lat, double lon) {
@@ -214,6 +284,29 @@ public class FetchWeatherTask extends AsyncTask<String, Void, WeatherModel[]> {
 
         // Return!
         return locationId;
+    }
+
+    public int addWeatherItems(WeatherModel[] weatherItems) throws IOException {
+        if (weatherItems == null || weatherItems.length == 0) {
+            throw new IOException("Invalid weather items array, no items or invalid array");
+        }
+
+        ContentValues[] values = new ContentValues[weatherItems.length];
+
+        // Convert model objects to ContentValues for bulkInsert
+        for (int i = 0; i < weatherItems.length; i++) {
+            values[i] = weatherItems[i].toContentValues();
+        }
+
+        int insertedRows = 0;
+        if (values.length > 0) {
+            insertedRows = context.getContentResolver().bulkInsert(
+                    WeatherContract.WeatherEntry.CONTENT_URI,
+                    values
+            );
+        }
+
+        return insertedRows;
     }
 
     public Context getContext() {

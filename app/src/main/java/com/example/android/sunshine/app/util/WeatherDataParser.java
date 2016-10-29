@@ -35,7 +35,7 @@ public class WeatherDataParser {
      * Fortunately parsing is easy:  constructor takes the JSON string and converts it
      * into an Object hierarchy for us.
      */
-    public WeatherModel[] fetchWeatherData(int numDays) throws JSONException {
+    public WeatherModel[] convertWeatherData() throws JSONException {
         // These are the names of the JSON objects that need to be extracted.
         final String OWM_LIST = "list";
         final String OWM_WEATHER = "weather";
@@ -68,7 +68,7 @@ public class WeatherDataParser {
         // now we work exclusively in UTC
         dayTime = new Time();
 
-        WeatherModel[] weatherItems = new WeatherModel[numDays];
+        WeatherModel[] weatherItems = new WeatherModel[weatherArray.length()];
         for(int i = 0; i < weatherArray.length(); i++) {
             // initialize
             long dateTime;
@@ -76,7 +76,7 @@ public class WeatherDataParser {
 
             // Update the date
             dateTime = dayTime.setJulianDay(julianStartDay+i);
-            model.setDate(dateTime);
+            model.setDateTime(dateTime);
 
             // Get the JSON object representing the day
             JSONObject dayForecast = weatherArray.getJSONObject(i);
@@ -87,13 +87,13 @@ public class WeatherDataParser {
             model.setId(0);
             model.setLocationId(0);
             model.setWeatherId(weatherObject.getInt(OWM_WEATHER_ID));
-            model.setShortDesc(weatherObject.getString(OWM_WEATHER_DESC));
-            model.setMin(tempObject.getDouble(OWM_TEMP_MIN));
-            model.setMax(tempObject.getDouble(OWM_TEMP_MAX));
+            model.setDescription(weatherObject.getString(OWM_WEATHER_DESC));
+            model.setLow(tempObject.getDouble(OWM_TEMP_MIN));
+            model.setHigh(tempObject.getDouble(OWM_TEMP_MAX));
             model.setHumidity(dayForecast.getDouble(OWM_HUMIDITY));
             model.setPressure(dayForecast.getDouble(OWM_PRESSURE));
-            model.setWind(dayForecast.getDouble(OWM_WIND_SPEED));
-            model.setDegrees(dayForecast.getInt(OWM_WIND_DIR));
+            model.setWindSpeed(dayForecast.getDouble(OWM_WIND_SPEED));
+            model.setWindDirection(dayForecast.getInt(OWM_WIND_DIR));
 
             weatherItems[i] = model;
         }
@@ -101,12 +101,12 @@ public class WeatherDataParser {
         return weatherItems;
     }
 
-    public LocationModel fetchLocationData(String locationSetting) throws JSONException {
+    public LocationModel convertLocationData(String locationSetting) throws JSONException {
         final String OWM_CITY = "city";
         final String OWM_COORD = "coord";
 
         final String OWM_ID = "id";
-        final String OWM_CITY_NAME = "city_name";
+        final String OWM_CITY_NAME = "name";
         final String OWM_COORD_LAT = "lat";
         final String OWM_COORD_LON = "lon";
 

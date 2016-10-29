@@ -2,9 +2,12 @@ package com.example.android.sunshine.app;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.CursorAdapter;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -16,7 +19,10 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.sync.FetchWeatherTask;
+import com.example.android.sunshine.app.util.Utility;
+import com.example.android.sunshine.app.sync.ForecastAdapter;
 
 import java.util.ArrayList;
 
@@ -28,7 +34,7 @@ public class ForecastFragment extends Fragment {
 
     private final String LOG_TAG = ForecastFragment.class.getSimpleName();
 
-    private ArrayAdapter<String> mForecastAdapter;
+    private CursorAdapter mForecastAdapter;
 
     public ForecastFragment() {
         // do nothing
@@ -71,11 +77,10 @@ public class ForecastFragment extends Fragment {
 
     private void updateWeather() {
         try {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            String location = prefs.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
-            String unitType = prefs.getString(getString(R.string.pref_units_key), getString(R.string.pref_units_metric));
+            String location = Utility.getPreferredLocation(getActivity());
+            String unitType = Utility.getUnitType(getActivity());
 
-            FetchWeatherTask weatherTask = new FetchWeatherTask(mForecastAdapter, unitType, getContext());
+            FetchWeatherTask weatherTask = new FetchWeatherTask(getContext());
             weatherTask.execute(location, "json", "metric", "7");
         } catch (Exception e) {
             Log.e(LOG_TAG, "Error while updating weather, " + e.getMessage(), e);
@@ -85,25 +90,28 @@ public class ForecastFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        String locationSetting = Utility.getPreferredLocation(getActivity());
 
-        mForecastAdapter = new ArrayAdapter<>(
-                getActivity(),
-                R.layout.list_item_forecast,
-                R.id.list_item_forecast_textview,
-                new ArrayList<String>()
+        // Sort order:  Ascending, by date.
+        String sortOrder = WeatherContract.WeatherEntry.COLUMN_DATE + " ASC";
+        Uri weatherForLocationUri = WeatherContract.WeatherEntry.buildWeatherLocationWithStartDate(
+                locationSetting, System.currentTimeMillis());
+
+        Cursor cursor = getActivity().getContentResolver().query(
+                weatherForLocationUri,
+                null,
+                null,
+                null,
+                sortOrder
         );
 
+        mForecastAdapter = new ForecastAdapter(getActivity(), cursor, 0);
+
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+        // Get a reference to the ListView, and attach this adapter to it.
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         listView.setAdapter(mForecastAdapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Intent intent = new Intent(getActivity(), DetailActivity.class);
-                intent.putExtra("forecast_details", mForecastAdapter.getItem(i));
-                startActivity(intent);
-            }
-        });
 
         return rootView;
     }

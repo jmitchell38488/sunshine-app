@@ -1,9 +1,12 @@
 package com.example.android.sunshine.app.data.model;
 
 import com.example.android.sunshine.app.R;
+import com.example.android.sunshine.app.data.WeatherContract;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
@@ -26,22 +29,22 @@ public class WeatherModel {
     private int id;
 
     // location_id
-    private int locationId;
+    private float locationId;
 
-    // date
-    private long date;
+    // dateTime
+    private long dateTime;
 
     // weather_id
-    private int weatherId;
+    private float weatherId;
 
     // short_desc
-    private String shortDesc;
+    private String description;
 
-    // min
-    private double min;
+    // low
+    private double low;
 
-    // max
-    private double max;
+    // high
+    private double high;
 
     // humidity
     private double humidity;
@@ -49,29 +52,29 @@ public class WeatherModel {
     // pressure
     private double pressure;
 
-    // wind
-    private double wind;
+    // windSpeed
+    private double windSpeed;
 
-    // degrees
-    private double degrees;
+    // windDirection
+    private double windDirection;
 
     public WeatherModel() {
         // Do nothing
     }
 
-    public WeatherModel(int id, int locationId, int date, int weatherId, String shortDesc, double min,
-                        double max, double humidity, double pressure, double wind, double degrees) {
+    public WeatherModel(int id, float locationId, int dateTime, float weatherId, String description, double low,
+                        double high, double humidity, double pressure, double windSpeed, double windDirection) {
         this.id = id;
         this.locationId = locationId;
-        this.date = date;
+        this.dateTime = dateTime;
         this.weatherId = weatherId;
-        this.shortDesc = shortDesc;
-        this.min = min;
-        this.max = max;
+        this.description = description;
+        this.low = low;
+        this.high = high;
         this.humidity = humidity;
         this.pressure = pressure;
-        this.wind = wind;
-        this.degrees = degrees;
+        this.windSpeed = windSpeed;
+        this.windDirection = windDirection;
     }
 
     public int getId() {
@@ -82,52 +85,52 @@ public class WeatherModel {
         this.id = id;
     }
 
-    public int getLocationId() {
+    public float getLocationId() {
         return locationId;
     }
 
-    public void setLocationId(int locationId) {
+    public void setLocationId(float locationId) {
         this.locationId = locationId;
     }
 
-    public long getDate() {
-        return date;
+    public long getDateTime() {
+        return dateTime;
     }
 
-    public void setDate(long date) {
-        this.date = date;
+    public void setDateTime(long dateTime) {
+        this.dateTime = dateTime;
     }
 
-    public int getWeatherId() {
+    public float getWeatherId() {
         return weatherId;
     }
 
-    public void setWeatherId(int weatherId) {
+    public void setWeatherId(float weatherId) {
         this.weatherId = weatherId;
     }
 
-    public String getShortDesc() {
-        return shortDesc;
+    public String getDescription() {
+        return description;
     }
 
-    public void setShortDesc(String shortDesc) {
-        this.shortDesc = shortDesc;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    public double getMin() {
-        return min;
+    public double getLow() {
+        return low;
     }
 
-    public void setMin(double min) {
-        this.min = min;
+    public void setLow(double low) {
+        this.low = low;
     }
 
-    public double getMax() {
-        return max;
+    public double getHigh() {
+        return high;
     }
 
-    public void setMax(double max) {
-        this.max = max;
+    public void setHigh(double high) {
+        this.high = high;
     }
 
     public double getHumidity() {
@@ -146,20 +149,20 @@ public class WeatherModel {
         this.pressure = pressure;
     }
 
-    public double getWind() {
-        return wind;
+    public double getWindSpeed() {
+        return windSpeed;
     }
 
-    public void setWind(double wind) {
-        this.wind = wind;
+    public void setWindSpeed(double windSpeed) {
+        this.windSpeed = windSpeed;
     }
 
-    public double getDegrees() {
-        return degrees;
+    public double getWindDirection() {
+        return windDirection;
     }
 
-    public void setDegrees(double degrees) {
-        this.degrees = degrees;
+    public void setWindDirection(double windDirection) {
+        this.windDirection = windDirection;
     }
 
     public boolean isMetric(Context context) {
@@ -198,15 +201,15 @@ public class WeatherModel {
     }
 
     public String getFormattedMinTemperature(Context context) {
-        return getFormattedTemperature(min, context);
+        return getFormattedTemperature(low, context);
     }
 
     public String getFormattedMaxTemperature(Context context) {
-        return getFormattedTemperature(max, context);
+        return getFormattedTemperature(high, context);
     }
 
     /**
-     * Helper method to convert the database representation of the date into something to display
+     * Helper method to convert the database representation of the dateTime into something to display
      * to users.  As classy and polished a user experience as "20140102" is, we can do better.
      *
      * The day string for forecast uses the following logic:
@@ -216,17 +219,17 @@ public class WeatherModel {
      * For all days after that: "Mon Jun 8"
      *
      * @param context Context to use for resource localization
-     * @return a user-friendly representation of the date.
+     * @return a user-friendly representation of the dateTime.
      */
     public String getFriendlyDayString(Context context) {
-        long dateInMillis = (long) date;
+        long dateInMillis = (long) dateTime;
         Time time = new Time();
         time.setToNow();
         long currentTime = System.currentTimeMillis();
         int julianDay = Time.getJulianDay(dateInMillis, time.gmtoff);
         int currentJulianDay = Time.getJulianDay(currentTime, time.gmtoff);
 
-        // If the date we're building the String for is today's date, the format
+        // If the dateTime we're building the String for is today's dateTime, the format
         // is "Today, June 24"
         if (julianDay == currentJulianDay) {
             String today = context.getString(R.string.today);
@@ -237,7 +240,7 @@ public class WeatherModel {
                     getFormattedMonthDay(context)
             );
         } else if ( julianDay < currentJulianDay + 7 ) {
-            // If the input date is less than a week in the future, just return the day name.
+            // If the input dateTime is less than a week in the future, just return the day name.
             return getDayName(context);
         } else {
             // Otherwise, use the form "Mon Jun 3"
@@ -254,10 +257,10 @@ public class WeatherModel {
      * @return
      */
     public String getDayName(Context context) {
-        // If the date is today, return the localized version of "Today" instead of the actual
+        // If the dateTime is today, return the localized version of "Today" instead of the actual
         // day name.
 
-        long dateInMillis = (long) date;
+        long dateInMillis = (long) dateTime;
         Time t = new Time();
         t.setToNow();
         int julianDay = Time.getJulianDay(dateInMillis, t.gmtoff);
@@ -277,16 +280,16 @@ public class WeatherModel {
     }
 
     /**
-     * Converts db date format to the format "Month day", e.g "June 24".
+     * Converts db dateTime format to the format "Month day", e.g "June 24".
      * @param context Context to use for resource localization
      * @return The day in the form of a string formatted "December 6"
      */
     public String getFormattedMonthDay(Context context) {
-        long dateInMillis = (long) date;
+        long dateInMillis = (long) dateTime;
         Time time = new Time();
         time.setToNow();
 
-        SimpleDateFormat dbDateFormat = new SimpleDateFormat(DATE_FORMAT);
+        //SimpleDateFormat dbDateFormat = new SimpleDateFormat(DATE_FORMAT);
         SimpleDateFormat monthDayFormat = new SimpleDateFormat("MMMM dd");
         String monthDayString = monthDayFormat.format(dateInMillis);
 
@@ -294,20 +297,19 @@ public class WeatherModel {
     }
 
     public String getFormattedString(String unitType, Context context) {
-        String highAndLow = formatHighLows(unitType, context);
-        return getFriendlyDayString(context) + " - " + shortDesc + " - " + formatHighLows(unitType, context);
+        return getFriendlyDayString(context) + " - " + description + " - " + formatHighLows(unitType, context);
     }
 
     /**
      * Prepare the weather high/lows for presentation.
      */
     private String formatHighLows(String unitType, Context context) {
-        double high = max, low = min;
+        double high = this.high, low = this.low;
         String unitStr = "c";
 
         if (unitType.equals(context.getString(R.string.pref_units_imperial))) {
-            high = (max * 1.8) + 32;
-            low = (min * 1.8) + 32;
+            high = (this.high * 1.8) + 32;
+            low = (this.low * 1.8) + 32;
             unitStr = "f";
         } else if (!unitType.equals(context.getString(R.string.pref_units_metric))) {
             Log.d(LOG_TAG, "Unit type not found: " + unitType);
@@ -318,5 +320,59 @@ public class WeatherModel {
         long roundedLow = Math.round(low);
 
         return roundedHigh + unitStr + "/" + roundedLow + unitStr;
+    }
+
+    public ContentValues toContentValues() {
+        ContentValues values = new ContentValues();
+
+        values.put(WeatherContract.WeatherEntry.COLUMN_LOC_KEY, locationId);
+        values.put(WeatherContract.WeatherEntry.COLUMN_WEATHER_ID, weatherId);
+        values.put(WeatherContract.WeatherEntry.COLUMN_DATE, dateTime);
+        values.put(WeatherContract.WeatherEntry.COLUMN_HUMIDITY, humidity);
+        values.put(WeatherContract.WeatherEntry.COLUMN_PRESSURE, pressure);
+        values.put(WeatherContract.WeatherEntry.COLUMN_WIND_SPEED, windSpeed);
+        values.put(WeatherContract.WeatherEntry.COLUMN_DEGREES, windDirection);
+        values.put(WeatherContract.WeatherEntry.COLUMN_MAX_TEMP, high);
+        values.put(WeatherContract.WeatherEntry.COLUMN_MIN_TEMP, low);
+        values.put(WeatherContract.WeatherEntry.COLUMN_SHORT_DESC, description);
+
+        return values;
+    }
+
+    public void loadFromContentValues(ContentValues contentValues) {
+        locationId = contentValues.getAsLong(WeatherContract.WeatherEntry.COLUMN_LOC_KEY);
+        weatherId = contentValues.getAsLong(WeatherContract.WeatherEntry.COLUMN_WEATHER_ID);
+        dateTime = contentValues.getAsLong(WeatherContract.WeatherEntry.COLUMN_DATE);
+        humidity = contentValues.getAsDouble(WeatherContract.WeatherEntry.COLUMN_HUMIDITY);
+        pressure = contentValues.getAsDouble(WeatherContract.WeatherEntry.COLUMN_PRESSURE);
+        windSpeed = contentValues.getAsDouble(WeatherContract.WeatherEntry.COLUMN_WIND_SPEED);
+        windDirection = contentValues.getAsInteger(WeatherContract.WeatherEntry.COLUMN_DEGREES);
+        high = contentValues.getAsDouble(WeatherContract.WeatherEntry.COLUMN_MAX_TEMP);
+        low = contentValues.getAsDouble(WeatherContract.WeatherEntry.COLUMN_MIN_TEMP);
+        description = contentValues.getAsString(WeatherContract.WeatherEntry.COLUMN_SHORT_DESC);
+    }
+
+    public void loadFromCursor(Cursor cursor) {
+        int _locationId = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_LOC_KEY);
+        int _weatherId = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_WEATHER_ID);
+        int _dateTime = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_DATE);
+        int _humidity = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_HUMIDITY);
+        int _pressure = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_PRESSURE);
+        int _windSpeed = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_WIND_SPEED);
+        int _windDirection = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_DEGREES);
+        int _high = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_MAX_TEMP);
+        int _low = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_MIN_TEMP);
+        int _description = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_SHORT_DESC);
+
+        locationId = cursor.getLong(_locationId);
+        weatherId = cursor.getLong(_weatherId);
+        dateTime = cursor.getLong(_dateTime);
+        humidity = cursor.getDouble(_humidity);
+        pressure = cursor.getDouble(_pressure);
+        windSpeed = cursor.getDouble(_windSpeed);
+        windDirection = cursor.getInt(_windDirection);
+        high = cursor.getDouble(_high);
+        low = cursor.getDouble(_low);
+        description = cursor.getString(_description);
     }
 }
