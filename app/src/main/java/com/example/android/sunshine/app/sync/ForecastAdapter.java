@@ -1,20 +1,16 @@
 package com.example.android.sunshine.app.sync;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.preference.PreferenceManager;
 import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.model.WeatherModel;
 import com.example.android.sunshine.app.util.Utility;
+import com.example.android.sunshine.app.view.ListItemViewHolder;
 
 /**
  * {@link ForecastAdapter} exposes a list of weather forecasts
@@ -51,8 +47,8 @@ public class ForecastAdapter extends CursorAdapter {
         }
 
         View view = LayoutInflater.from(context).inflate(layoutId, parent, false);
-        ViewHolder viewHolder = new ViewHolder(view);
-        view.setTag(viewHolder);
+        ListItemViewHolder listItemViewHolder = new ListItemViewHolder(view);
+        view.setTag(listItemViewHolder);
 
         return view;
     }
@@ -61,41 +57,23 @@ public class ForecastAdapter extends CursorAdapter {
     public void bindView(View view, Context context, Cursor cursor) {
         WeatherModel weatherModel = new WeatherModel();
         weatherModel.loadFromCursor(cursor);
-        ViewHolder viewHolder = (ViewHolder) view.getTag();
+        ListItemViewHolder listItemViewHolder = (ListItemViewHolder) view.getTag();
         boolean isMetric = Utility.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
 
         // Set icon
-        viewHolder.iconView.setImageResource(R.drawable.ic_launcher);
+        listItemViewHolder.iconView.setImageResource(R.drawable.ic_launcher);
 
         // Set date
-        viewHolder.dateView.setText(weatherModel.getFriendlyDayString(context));
+        listItemViewHolder.dateView.setText(weatherModel.getFriendlyDayString(context));
 
         // Set temperature high
-        viewHolder.highTempView.setText(weatherModel.getFormattedMaxTemperature(context, isMetric));
+        listItemViewHolder.highTempView.setText(weatherModel.getFormattedMaxTemperature(context, isMetric));
 
         // Set temperature low
-        viewHolder.lowTempView.setText(weatherModel.getFormattedMinTemperature(context, isMetric));
+        listItemViewHolder.lowTempView.setText(weatherModel.getFormattedMinTemperature(context, isMetric));
 
         // Set temperature low
-        viewHolder.descriptionView.setText(weatherModel.getDescription());
-    }
-
-    public static class ViewHolder {
-
-        public final ImageView iconView;
-        public final TextView dateView;
-        public final TextView descriptionView;
-        public final TextView highTempView;
-        public final TextView lowTempView;
-
-        public ViewHolder(View view) {
-            iconView = (ImageView) view.findViewById(R.id.list_item_icon);
-            dateView = (TextView) view.findViewById(R.id.list_item_date_textview);
-            descriptionView = (TextView) view.findViewById(R.id.list_item_high_textview);
-            highTempView = (TextView) view.findViewById(R.id.list_item_low_textview);
-            lowTempView = (TextView) view.findViewById(R.id.list_item_forecast_textview);
-        }
-
+        listItemViewHolder.descriptionView.setText(weatherModel.getDescription());
     }
 
 }

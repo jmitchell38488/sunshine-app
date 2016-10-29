@@ -1,5 +1,6 @@
 package com.example.android.sunshine.app;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -16,11 +17,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.data.model.WeatherModel;
 import com.example.android.sunshine.app.util.Utility;
+import com.example.android.sunshine.app.view.DetailsViewHolder;
+import com.example.android.sunshine.app.view.ListItemViewHolder;
 
 /**
  * Created by justinmitchell on 29/10/2016.
@@ -64,7 +66,11 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor> 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_detail, container, false);
+        View view = inflater.inflate(R.layout.fragment_detail, container, false);
+        DetailsViewHolder viewHolder = new DetailsViewHolder(view);
+        view.setTag(viewHolder);
+
+        return view;
     }
 
     private Intent createShareForecastIntent() {
@@ -113,10 +119,39 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor> 
         WeatherModel weatherModel = new WeatherModel();
         weatherModel.loadFromCursor(cursor);
 
-        mForecastStr = weatherModel.getFormattedString(Utility.getUnitType(getActivity()), getActivity());
+        DetailsViewHolder viewHolder = (DetailsViewHolder) getView().getTag();
+        Context context = getActivity();
+        boolean isMetric = Utility.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
 
-        TextView detailTextView = (TextView)getView().findViewById(R.id.forecast_details);
-        detailTextView.setText(mForecastStr);
+        // Do friendly formatting for sharing
+        mForecastStr = weatherModel.getFormattedString(Utility.getUnitType(context), context);
+
+        // Set icon
+        viewHolder.iconView.setImageResource(R.drawable.ic_launcher);
+
+        // Set day
+        viewHolder.dayView.setText(weatherModel.getDayName(context));
+
+        // Set date
+        viewHolder.dateView.setText(weatherModel.getFormattedMonthDay(context));
+
+        // Set description
+        viewHolder.descriptionView.setText(weatherModel.getDescription());
+
+        // Set temperature high
+        viewHolder.highTempView.setText(weatherModel.getFormattedMaxTemperature(context, isMetric));
+
+        // Set temperature low
+        viewHolder.lowTempView.setText(weatherModel.getFormattedMinTemperature(context, isMetric));
+
+        // Set humidity
+        viewHolder.humidityView.setText(weatherModel.getFormattedHumidity(context));
+
+        // Set pressure
+        viewHolder.pressureView.setText(weatherModel.getFormattedPressure(context));
+
+        // Set wind details
+        viewHolder.windView.setText(weatherModel.getFormattedWindDetails(context));
 
         // If onCreateOptionsMenu has already happened, we need to update the share intent now.
         if (mShareActionProvider != null) {

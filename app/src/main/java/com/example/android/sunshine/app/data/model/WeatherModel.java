@@ -2,6 +2,7 @@ package com.example.android.sunshine.app.data.model;
 
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.WeatherContract;
+import com.example.android.sunshine.app.util.Utility;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -166,18 +167,7 @@ public class WeatherModel {
     }
 
     public boolean isMetric(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        return prefs.getString(context.getString(R.string.pref_units_key),
-                context.getString(R.string.pref_units_metric))
-                .equals(context.getString(R.string.pref_units_metric));
-    }
-
-    public String formatDate() {
-        return DateFormat.getDateInstance().format(new Date(dateTime));
-    }
-
-    public String getFormattedWind(Context context) {
-        return null;
+        return Utility.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
     }
 
     /**
@@ -204,6 +194,50 @@ public class WeatherModel {
 
     public String getFormattedMaxTemperature(Context context, boolean isMetric) {
         return getFormattedTemperature(high, context, isMetric);
+    }
+
+    public String getFormattedHumidity(Context context) {
+        return context.getString(R.string.format_humidity, humidity);
+    }
+
+    public String getFormattedPressure(Context context) {
+        return context.getString(R.string.format_pressure, pressure);
+    }
+
+    public String getFormattedWindDetails(Context context) {
+        int windFormat;
+        
+        if (isMetric(context)) {
+            windFormat = R.string.format_wind_kmh;
+        } else {
+            windFormat = R.string.format_wind_mph;
+            windSpeed = .621371192237334f * windSpeed;
+        }
+
+        // From wind direction in degrees, determine compass direction as a string (e.g NW)
+        // You know what's fun, writing really long if/else statements with tons of possible
+        // conditions.  Seriously, try it!
+        String direction = "Unknown";
+
+        if (windDirection >= 337.5 || windDirection < 22.5) {
+            direction = "N";
+        } else if (windDirection >= 22.5 && windDirection < 67.5) {
+            direction = "NE";
+        } else if (windDirection >= 67.5 && windDirection < 112.5) {
+            direction = "E";
+        } else if (windDirection >= 112.5 && windDirection < 157.5) {
+            direction = "SE";
+        } else if (windDirection >= 157.5 && windDirection < 202.5) {
+            direction = "S";
+        } else if (windDirection >= 202.5 && windDirection < 247.5) {
+            direction = "SW";
+        } else if (windDirection >= 247.5 && windDirection < 292.5) {
+            direction = "W";
+        } else if (windDirection >= 292.5 && windDirection < 337.5) {
+            direction = "NW";
+        }
+
+        return String.format(context.getString(windFormat), windSpeed, direction);
     }
 
     /**
