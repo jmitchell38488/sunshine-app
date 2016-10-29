@@ -187,24 +187,23 @@ public class WeatherModel {
      * @param context
      * @return
      */
-    public String getFormattedTemperature(double temperature, Context context) {
-        // Data stored in Celsius by default.  If user prefers to see in Fahrenheit, convert
-        // the values here.
-        String suffix = "\u00B0";
-        if (!isMetric(context)) {
-            temperature = (temperature * 1.8) + 32;
+    public String getFormattedTemperature(double temperature, Context context, boolean isMetric) {
+        double temp;
+        if (!isMetric) {
+            temp = 9 * temperature / 5 + 32;
+        } else {
+            temp = temperature;
         }
 
-        // For presentation, assume the user doesn't care about tenths of a degree.
-        return String.format(context.getString(R.string.format_temperature), temperature);
+        return context.getString(R.string.format_temperature, temp);
     }
 
-    public String getFormattedMinTemperature(Context context) {
-        return getFormattedTemperature(low, context);
+    public String getFormattedMinTemperature(Context context, boolean isMetric) {
+        return getFormattedTemperature(low, context, isMetric);
     }
 
-    public String getFormattedMaxTemperature(Context context) {
-        return getFormattedTemperature(high, context);
+    public String getFormattedMaxTemperature(Context context, boolean isMetric) {
+        return getFormattedTemperature(high, context, isMetric);
     }
 
     /**
