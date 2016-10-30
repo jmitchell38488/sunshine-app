@@ -78,4 +78,22 @@
     <string name="pref_enable_gps_location_true">Using GPS</string>
     <string name="pref_enable_gps_location_false">Using Preferred</string>
     <string name="pref_enable_gps_location_default" translatable="false">false</string>
+
+    <!-- Preference Category Headings -->
+    <string name="pref_settings_display_preferences">DISPLAY PREFERENCES</string>
+    <string name="pref_settings_sync_preferences">SYNC PREFERENCES</string>
+
+    <!-- Strings related to sync frequency -->
+    <string name="pref_sync_frequency">Sync frequency</string>
+    <string name="pref_sync_frequency_key">sync_frequency</string>
+    <string name="pref_sync_frequency_default">3</string>
+    <string name="pref_sync_frequency_value3_label">3 Hours</string>
+    <string name="pref_sync_frequency_value3_value">3</string>
+    <string name="pref_sync_frequency_value6_label">6 Hours</string>
+    <string name="pref_sync_frequency_value6_value">6</string>
+    <string name="pref_sync_frequency_value12_label">12 Hours</string>
+    <string name="pref_sync_frequency_value12_value">12</string>
+    <string name="pref_sync_frequency_value24_label">1 Day</string>
+    <string name="pref_sync_frequency_value24_value">24</string>
+
 </resources>

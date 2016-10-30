@@ -9,4 +9,18 @@
         <item>@string/pref_units_metric</item>
         <item>@string/pref_units_imperial</item>
     </string-array>
+
+    <string-array name="pref_sync_frequency_options">
+        <item>@string/pref_sync_frequency_value3_label</item>
+        <item>@string/pref_sync_frequency_value6_label</item>
+        <item>@string/pref_sync_frequency_value12_label</item>
+        <item>@string/pref_sync_frequency_value24_label</item>
+    </string-array>
+
+    <string-array name="pref_sync_frequency_values">
+        <item>@string/pref_sync_frequency_value3_value</item>
+        <item>@string/pref_sync_frequency_value6_value</item>
+        <item>@string/pref_sync_frequency_value12_value</item>
+        <item>@string/pref_sync_frequency_value24_value</item>
+    </string-array>
 </resources>
