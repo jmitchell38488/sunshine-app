@@ -47,7 +47,7 @@ public class WeatherContract {
             WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING,
             WeatherContract.LocationEntry.COLUMN_CITY_NAME,
             WeatherContract.LocationEntry.COLUMN_COORD_LAT,
-            WeatherContract.LocationEntry.COLUMN_COORD_LONG
+            WeatherContract.LocationEntry.COLUMN_COORD_LON
     };
 
     public static final int COL_WEATHER_ID = 0;
@@ -86,7 +86,7 @@ public class WeatherContract {
         public static final String COLUMN_LOCATION_SETTING = "location_setting";
         public static final String COLUMN_CITY_NAME = "city_name";
         public static final String COLUMN_COORD_LAT = "coord_lat";
-        public static final String COLUMN_COORD_LONG = "coord_long";
+        public static final String COLUMN_COORD_LON = "coord_long";
 
         public static Uri buildLocationUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);

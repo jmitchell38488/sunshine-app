@@ -1,6 +1,7 @@
 package com.example.android.sunshine.app.data.model;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 
 import com.example.android.sunshine.app.data.WeatherContract;
 
@@ -25,18 +26,18 @@ public class LocationModel {
     private double coordLat;
 
     // coord_long
-    private double coordLong;
+    private double coordLon;
 
     public LocationModel() {
         // Do nothing
     }
 
-    public LocationModel(long id, String locationSetting, String cityName, double coordLat, double coordLong) {
+    public LocationModel(long id, String locationSetting, String cityName, double coordLat, double coordLon) {
         this.id = id;
         this.locationSetting = locationSetting;
         this.cityName = cityName;
         this.coordLat = coordLat;
-        this.coordLong = coordLong;
+        this.coordLon = coordLon;
     }
 
     public long getId() {
@@ -71,12 +72,12 @@ public class LocationModel {
         this.coordLat = coordLat;
     }
 
-    public double getCoordLong() {
-        return coordLong;
+    public double getCoordLon() {
+        return coordLon;
     }
 
-    public void setCoordLong(double coordLong) {
-        this.coordLong = coordLong;
+    public void setCoordLon(double coordLon) {
+        this.coordLon = coordLon;
     }
 
     public ContentValues toContentValues() {
@@ -85,8 +86,20 @@ public class LocationModel {
         values.put(WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING, locationSetting);
         values.put(WeatherContract.LocationEntry.COLUMN_CITY_NAME, cityName);
         values.put(WeatherContract.LocationEntry.COLUMN_COORD_LAT, coordLat);
-        values.put(WeatherContract.LocationEntry.COLUMN_COORD_LONG, coordLong);
+        values.put(WeatherContract.LocationEntry.COLUMN_COORD_LON, coordLon);
 
         return values;
+    }
+
+    public void loadFromCursor(Cursor cursor) {
+        int _locationSetting = cursor.getColumnIndex(WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING);
+        int _cityName = cursor.getColumnIndex(WeatherContract.LocationEntry.COLUMN_CITY_NAME);
+        int _coordLat = cursor.getColumnIndex(WeatherContract.LocationEntry.COLUMN_COORD_LAT);
+        int _coordLon = cursor.getColumnIndex(WeatherContract.LocationEntry.COLUMN_COORD_LON);
+
+        locationSetting = cursor.getString(_locationSetting);
+        cityName = cursor.getString(_cityName);
+        coordLat = cursor.getDouble(_coordLat);
+        coordLon = cursor.getDouble(_coordLon);
     }
 }

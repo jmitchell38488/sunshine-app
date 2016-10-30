@@ -9,9 +9,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 /**
  * Created by justinmitchell on 25/10/2016.
  */
@@ -118,7 +115,7 @@ public class WeatherDataParser {
         model.setId(location.getInt(OWM_ID));
         model.setCityName(location.getString(OWM_CITY_NAME));
         model.setCoordLat(coords.getDouble(OWM_COORD_LAT));
-        model.setCoordLong(coords.getDouble(OWM_COORD_LON));
+        model.setCoordLon(coords.getDouble(OWM_COORD_LON));
         model.setLocationSetting(locationSetting);
 
         return model;

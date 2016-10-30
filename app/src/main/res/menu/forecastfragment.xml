@@ -6,4 +6,10 @@
         android:id="@+id/action_refresh"
         android:title="@string/action_refresh"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_map"
+        android:title="@string/action_map"
+        android:orderInCategory="200"
+        app:showAsAction="never" />
 </menu>

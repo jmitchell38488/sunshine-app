@@ -12,6 +12,7 @@ import android.view.MenuItem;
 
 import com.example.android.sunshine.app.fragment.DetailFragment;
 import com.example.android.sunshine.app.fragment.ForecastFragment;
+import com.example.android.sunshine.app.sync.SunshineSyncAdapter;
 import com.example.android.sunshine.app.util.Utility;
 
 
@@ -50,6 +51,8 @@ public class MainActivity extends AppCompatActivity  implements ForecastFragment
 
         ForecastFragment forecastFragment = ((ForecastFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_forecast));
         forecastFragment.setUseTodayLayout(!mTwoPane);
+
+        SunshineSyncAdapter.initializeSyncAdapter(this);
     }
 
     @Override
@@ -73,31 +76,9 @@ public class MainActivity extends AppCompatActivity  implements ForecastFragment
                 Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
                 startActivity(intent);
                 break;
-
-            case R.id.action_map:
-                Log.d(LOG_TAG, "Triggering intent {Maps} to retrieve preferred location");
-                openPreferredLocationInMap();
-                break;
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    private void openPreferredLocationInMap() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String location = prefs.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
-
-        // Set the URI for the geo location for maps
-        Uri geoLocation = Uri.parse("geo:0,0?").buildUpon()
-                .appendQueryParameter("q", location)
-                .build();
-
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(geoLocation);
-
-        if (intent.resolveActivity(getPackageManager()) != null) {
-            startActivity(intent);
-        }
     }
 
     @Override

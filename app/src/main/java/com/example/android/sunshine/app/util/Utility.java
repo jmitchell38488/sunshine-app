@@ -94,4 +94,15 @@ public class Utility {
         return -1;
     }
 
+    public static boolean userDisplayNotifications(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        String displayNotificationsKey = context.getString(R.string.pref_enable_notifications_key);
+
+        boolean displayNotifications = prefs.getBoolean(displayNotificationsKey,
+                Boolean.parseBoolean(context.getString(R.string.pref_enable_notifications_default)));
+
+        return displayNotifications == true;
+
+    }
+
 }

@@ -1,8 +1,5 @@
 package com.example.android.sunshine.app.fragment;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -23,11 +20,10 @@ import android.widget.ListView;
 
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.WeatherContract;
-import com.example.android.sunshine.app.service.SunshineAlarmReceiver;
-import com.example.android.sunshine.app.sync.FetchWeatherTask;
+import com.example.android.sunshine.app.data.model.LocationModel;
+import com.example.android.sunshine.app.sync.SunshineSyncAdapter;
 import com.example.android.sunshine.app.util.Utility;
 import com.example.android.sunshine.app.sync.ForecastAdapter;
-import com.example.android.sunshine.app.service.SunshineService;
 
 /**
  * Created by justinmitchell on 25/10/2016.
@@ -75,22 +71,44 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 Log.d(LOG_TAG, "Triggering action {action_refresh}");
                 updateWeather();
                 return true;
+
+            case R.id.action_map:
+                Log.d(LOG_TAG, "Triggering intent {Maps} to retrieve preferred location");
+                openPreferredLocationInMap();
+                break;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateWeather() {
-        try {
-            Intent alarmIntent = new Intent(getActivity(), SunshineAlarmReceiver.class);
-            alarmIntent.putExtra(SunshineService.LOCATION_QUERY_EXTRA, Utility.getPreferredLocation(getActivity()));
-
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(getActivity(), 0, alarmIntent, PendingIntent.FLAG_ONE_SHOT);
-            AlarmManager alarmManager = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE);
-            alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 5000, pendingIntent);
-        } catch (Exception e) {
-            Log.e(LOG_TAG, "Error while updating weather, " + e.getMessage(), e);
+    private void openPreferredLocationInMap() {
+        if (mForecastAdapter == null) {
+            return;
         }
+
+        Cursor cursor = mForecastAdapter.getCursor();
+        if (cursor == null) {
+            return;
+        }
+
+        cursor.moveToPosition(0);
+        LocationModel location = new LocationModel();
+        location.loadFromCursor(cursor);
+
+        Uri geoLocation = Uri.parse("geo:" + location.getCoordLat() + "," + location.getCoordLon());
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(geoLocation);
+
+        if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
+            startActivity(intent);
+        } else {
+            Log.d(LOG_TAG, "Couldn't call " + geoLocation.toString() + ", no receiving apps installed!");
+        }
+    }
+
+    private void updateWeather() {
+        SunshineSyncAdapter.syncImmediately(getActivity());
     }
 
     @Override
