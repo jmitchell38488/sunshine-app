@@ -29,6 +29,7 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
         // updated when the preference changes.
         bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_location_key)));
         bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_units_key)));
+        bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_sync_frequency_key)));
     }
 
     /**

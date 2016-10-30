@@ -58,7 +58,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     public static final double SYNC_FLEXTIME = 0.333;
 
     // Set notifications to update every 6 hours
-    private static final long WEATHER_NOTIFICATION_DELAY = 1000 * 60 * 60 * 6;
+    //private static final long WEATHER_NOTIFICATION_DELAY = 1000 * 60 * 60 * 6;
     private static final int WEATHER_NOTIFICATION_ID = 3004;
 
     public SunshineSyncAdapter(Context context, boolean autoInitialize) {
@@ -143,63 +143,68 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         String lastNotificationKey = context.getString(R.string.pref_last_notification);
         long lastSync = prefs.getLong(lastNotificationKey, 0);
 
-        if (System.currentTimeMillis() - lastSync >= WEATHER_NOTIFICATION_DELAY) {
-            // Last sync was more than 1 day ago, let's send a notification with the weather.
-            String locationQuery = Utility.getPreferredLocation(context);
+        // Get the notification time with the sync frequency minus 1 minute so that it will always notify
+        long weatherNotificationDetail = (Long.parseLong(Utility.getSyncFrequency(context)) * 3600) - 60;
 
-            Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
+        if (System.currentTimeMillis() - lastSync < weatherNotificationDetail) {
+            return;
+        }
 
-            // we'll query our contentProvider, as always
-            Cursor cursor = context.getContentResolver().query(weatherUri, WeatherContract.FORECAST_COLUMNS, null, null, null);
+        // Last sync was more than 1 day ago, let's send a notification with the weather.
+        String locationQuery = Utility.getPreferredLocation(context);
 
-            if (cursor.moveToFirst()) {
-                WeatherModel weatherModel = new WeatherModel();
-                weatherModel.loadFromCursor(cursor);
+        Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
 
-                int iconId = Utility.getIconResourceForWeatherCondition((int) weatherModel.getWeatherId());
-                String title = context.getString(R.string.app_name);
+        // we'll query our contentProvider, as always
+        Cursor cursor = context.getContentResolver().query(weatherUri, WeatherContract.FORECAST_COLUMNS, null, null, null);
 
-                // Define the text of the forecast.
-                String contentText = String.format(
-                        context.getString(R.string.format_notification),
-                        weatherModel.getDescription(),
-                        weatherModel.getFormattedMaxTemperature(context, weatherModel.isMetric(context)),
-                        weatherModel.getFormattedMinTemperature(context, weatherModel.isMetric(context)));
+        if (cursor.moveToFirst()) {
+            WeatherModel weatherModel = new WeatherModel();
+            weatherModel.loadFromCursor(cursor);
 
-                Log.d(LOG_TAG, "Notification (" + contentText + ")");
+            int iconId = Utility.getIconResourceForWeatherCondition((int) weatherModel.getWeatherId());
+            String title = context.getString(R.string.app_name);
 
-                // NotificationCompatBuilder is a very convenient way to build backward-compatible
-                // notifications.  Just throw in some data.
-                NotificationCompat.Builder mBuilder =
-                        new NotificationCompat.Builder(getContext())
-                                .setSmallIcon(iconId)
-                                .setContentTitle(title)
-                                .setContentText(contentText);
+            // Define the text of the forecast.
+            String contentText = String.format(
+                    context.getString(R.string.format_notification),
+                    weatherModel.getDescription(),
+                    weatherModel.getFormattedMaxTemperature(context, weatherModel.isMetric(context)),
+                    weatherModel.getFormattedMinTemperature(context, weatherModel.isMetric(context)));
 
-                // Make something interesting happen when the user clicks on the notification.
-                // In this case, opening the app is sufficient.
-                Intent resultIntent = new Intent(context, MainActivity.class);
+            Log.d(LOG_TAG, "Notification (" + contentText + ")");
 
-                // The stack builder object will contain an artificial back stack for the
-                // started Activity.
-                // This ensures that navigating backward from the Activity leads out of
-                // your application to the Home screen.
-                TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-                stackBuilder.addNextIntent(resultIntent);
-                PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-                mBuilder.setContentIntent(resultPendingIntent);
+            // NotificationCompatBuilder is a very convenient way to build backward-compatible
+            // notifications.  Just throw in some data.
+            NotificationCompat.Builder mBuilder =
+                    new NotificationCompat.Builder(getContext())
+                            .setSmallIcon(iconId)
+                            .setContentTitle(title)
+                            .setContentText(contentText);
 
-                NotificationManager mNotificationManager =
-                        (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
-                // WEATHER_NOTIFICATION_ID allows you to update the notification later on.
-                mNotificationManager.notify(WEATHER_NOTIFICATION_ID, mBuilder.build());
+            // Make something interesting happen when the user clicks on the notification.
+            // In this case, opening the app is sufficient.
+            Intent resultIntent = new Intent(context, MainActivity.class);
+
+            // The stack builder object will contain an artificial back stack for the
+            // started Activity.
+            // This ensures that navigating backward from the Activity leads out of
+            // your application to the Home screen.
+            TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+            stackBuilder.addNextIntent(resultIntent);
+            PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+            mBuilder.setContentIntent(resultPendingIntent);
+
+            NotificationManager mNotificationManager =
+                    (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            // WEATHER_NOTIFICATION_ID allows you to update the notification later on.
+            mNotificationManager.notify(WEATHER_NOTIFICATION_ID, mBuilder.build());
 
 
-                //refreshing last sync
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putLong(lastNotificationKey, System.currentTimeMillis());
-                editor.commit();
-            }
+            //refreshing last sync
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putLong(lastNotificationKey, System.currentTimeMillis());
+            editor.commit();
         }
     }
 

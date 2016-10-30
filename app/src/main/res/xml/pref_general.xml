@@ -5,6 +5,7 @@
     <PreferenceCategory
         android:title="@string/pref_settings_display_preferences"
         android:key="pref_key_display_settings">
+
         <ListPreference
             android:title="@string/pref_units_label"
             android:key="@string/pref_units_key"
@@ -38,13 +39,11 @@
             android:defaultValue="@string/pref_enable_gps_location_default" />
 
         <ListPreference
-            android:defaultValue="@string/pref_sync_frequency_default"
-            android:entries="@array/pref_sync_frequency_options"
-            android:entryValues="@array/pref_sync_frequency_values"
+            android:title="@string/pref_sync_frequency"
             android:key="@string/pref_sync_frequency_key"
-            android:negativeButtonText="@null"
-            android:positiveButtonText="@null"
-            android:title="@string/pref_sync_frequency" />
+            android:defaultValue="@string/pref_sync_frequency_default"
+            android:entryValues="@array/pref_sync_frequency_values"
+            android:entries="@array/pref_sync_frequency_options" />
     </PreferenceCategory>
 
 </PreferenceScreen>
