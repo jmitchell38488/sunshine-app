@@ -55,10 +55,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     private final String DAYS_PARAM = "cnt";
     private final String API_KEY = "APPID";
 
-    // Interval at which to sync with the weather, in seconds.
-    // 60 seconds (1 minute) * 180 = 3 hours
-    public static final int SYNC_INTERVAL = 60 * 180;
-    public static final int SYNC_FLEXTIME = SYNC_INTERVAL / 3;
+    public static final double SYNC_FLEXTIME = 0.333;
 
     // Set notifications to update every 6 hours
     private static final long WEATHER_NOTIFICATION_DELAY = 1000 * 60 * 60 * 6;
@@ -457,10 +454,14 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
 
     private static void onAccountCreated(Account newAccount, Context context) {
+        // Get the sync interval in hours, make sure to multiply by seconds (3600: 1 hour)
+        int syncInterval = Integer.parseInt(Utility.getSyncFrequency(context)) * 3600;
+        int syncFlex = (int)((double)syncInterval * SYNC_FLEXTIME);
+
         /*
          * Since we've created an account
          */
-        SunshineSyncAdapter.configurePeriodicSync(context, SYNC_INTERVAL, SYNC_FLEXTIME);
+        SunshineSyncAdapter.configurePeriodicSync(context, syncInterval, syncFlex);
 
         /*
          * Without calling setSyncAutomatically, our periodic sync will not be enabled.
