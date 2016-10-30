@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
@@ -180,6 +182,87 @@ public class Utility {
                         MainActivity.PERMISSIONS_REQUEST_GPS);
             }
         }
+    }
+
+    public static void checkNetworkPermissions(Activity activity) {
+        // Here, thisActivity is the current activity
+        if (ActivityCompat.checkSelfPermission(activity,
+                Manifest.permission.ACCESS_NETWORK_STATE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
+                    Manifest.permission.ACCESS_NETWORK_STATE)) {
+                Log.d(LOG_TAG, "Rationale required for Manifest.permission.ACCESS_FINE_LOCATION");
+            } else {
+                ActivityCompat.requestPermissions(activity,
+                        new String[]{Manifest.permission.ACCESS_NETWORK_STATE},
+                        MainActivity.PERMISSIONS_ACCESS_NETWORK_STATE);
+            }
+        }
+    }
+
+    public static void checkRequiredPermissions(Activity activity) {
+        // Here, thisActivity is the current activity
+        if ((ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_NETWORK_STATE) != PackageManager.PERMISSION_GRANTED) ||
+                (ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)){
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.ACCESS_NETWORK_STATE) ||
+                    ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                Log.d(LOG_TAG, "Rationale required");
+            } else {
+                ActivityCompat.requestPermissions(activity,
+                        new String[]{Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.ACCESS_FINE_LOCATION},
+                        MainActivity.PERMISSIONS_ALL);
+            }
+        }
+    }
+
+    /**
+     * Helper method to determine if the users' device is currently connected to either the cell
+     * network or to a wifi network
+     *
+     * @param activity
+     * @return
+     */
+    public static boolean checkNetworkConnectivity(Activity activity) {
+        ConnectivityManager cm =
+                (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        if (activeNetwork == null) {
+            return false;
+        }
+
+        boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+        boolean isWiFi = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
+
+        return isConnected || isWiFi;
+    }
+
+    /**
+     * Helper method to determine if the users' device is currently connected to a WiFi network.
+     * The active network can either be cell or wifi, but by ensuring that the wifi component
+     * is required in the return ensures that this returns true only when the user is connected
+     * to a wifi network. This still doesn't guarantee network traffic.
+     *
+     * @param activity
+     * @return
+     */
+    public static boolean checkWiFiConnectivity(Activity activity) {
+        ConnectivityManager cm =
+                (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        if (activeNetwork == null) {
+            return false;
+        }
+        
+        boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+        boolean isWiFi = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
+
+        return isConnected && isWiFi;
     }
 
 }

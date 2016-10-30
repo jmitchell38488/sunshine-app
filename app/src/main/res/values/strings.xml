@@ -98,5 +98,6 @@
 
     <!-- Strings related to empty list -->
     <string name="format_empty_forecast_list">No weather information available</string>
+    <string name="format_empty_forecast_list_no_network">No weather information available\nThe network is not available to fetch data</string>
 
 </resources>

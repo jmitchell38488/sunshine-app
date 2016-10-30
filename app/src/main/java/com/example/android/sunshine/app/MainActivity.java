@@ -23,7 +23,9 @@ public class MainActivity extends AppCompatActivity  implements ForecastFragment
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
     private static final String DETAILFRAGMENT_TAG = "DFTAG";
 
+    public static final int PERMISSIONS_ALL = 1000;
     public static final int PERMISSIONS_REQUEST_GPS = 1001;
+    public static final int PERMISSIONS_ACCESS_NETWORK_STATE = 1002;
 
     private boolean mTwoPane;
     private String mLocation;
@@ -56,7 +58,7 @@ public class MainActivity extends AppCompatActivity  implements ForecastFragment
         ForecastFragment forecastFragment = ((ForecastFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_forecast));
         forecastFragment.setUseTodayLayout(!mTwoPane);
 
-        Utility.checkLocationPermissions(this);
+        Utility.checkRequiredPermissions(this);
 
         SunshineSyncAdapter.initializeSyncAdapter(this);
     }
@@ -149,12 +151,18 @@ public class MainActivity extends AppCompatActivity  implements ForecastFragment
     }
 
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        if (requestCode == PERMISSIONS_REQUEST_GPS) {
-            if(grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                //
-            } else {
-                //
-            }
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_GPS:
+                if(grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //
+                }
+                break;
+
+            case PERMISSIONS_ACCESS_NETWORK_STATE:
+                if(grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //
+                }
+                break;
         }
     }
 
