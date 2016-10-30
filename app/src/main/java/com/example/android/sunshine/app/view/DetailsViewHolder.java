@@ -21,6 +21,7 @@ public class DetailsViewHolder {
     public final TextView humidityView;
     public final TextView pressureView;
     public final TextView windView;
+    public final TextView locationView;
 
     public DetailsViewHolder(View view) {
         iconView = (ImageView) view.findViewById(R.id.detail_icon);
@@ -32,6 +33,12 @@ public class DetailsViewHolder {
         humidityView = (TextView) view.findViewById(R.id.detail_humidity_textview);
         pressureView = (TextView) view.findViewById(R.id.detail_pressure_textview);
         windView = (TextView) view.findViewById(R.id.detail_wind_textview);
+
+        if (view.findViewById(R.id.list_item_location_textview) != null) {
+            locationView = (TextView) view.findViewById(R.id.list_item_location_textview);
+        } else {
+            locationView = null;
+        }
     }
 
 }

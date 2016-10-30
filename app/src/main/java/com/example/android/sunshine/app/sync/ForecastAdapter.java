@@ -8,6 +8,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.android.sunshine.app.R;
+import com.example.android.sunshine.app.data.WeatherContract;
+import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.data.model.WeatherModel;
 import com.example.android.sunshine.app.util.Utility;
 import com.example.android.sunshine.app.view.ListItemViewHolder;
@@ -63,6 +65,10 @@ public class ForecastAdapter extends CursorAdapter {
     public void bindView(View view, Context context, Cursor cursor) {
         WeatherModel weatherModel = new WeatherModel();
         weatherModel.loadFromCursor(cursor);
+
+        LocationModel locationModel = new LocationModel();
+        locationModel.loadFromCursor(cursor);
+
         ListItemViewHolder listItemViewHolder = (ListItemViewHolder) view.getTag();
         boolean isMetric = Utility.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
 
@@ -94,6 +100,11 @@ public class ForecastAdapter extends CursorAdapter {
 
         // Set temperature low
         listItemViewHolder.descriptionView.setText(weatherModel.getDescription());
+
+        // Set location
+        if (listItemViewHolder.locationView != null) {
+            listItemViewHolder.locationView.setText(locationModel.getCityName());
+        }
     }
 
 }

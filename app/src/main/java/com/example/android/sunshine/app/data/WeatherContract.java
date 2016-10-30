@@ -83,15 +83,29 @@ public class WeatherContract {
 
         public static final String TABLE_NAME = "location";
 
+        public static final String COLUMN_ID = "id";
         public static final String COLUMN_LOCATION_SETTING = "location_setting";
         public static final String COLUMN_CITY_NAME = "city_name";
         public static final String COLUMN_COORD_LAT = "coord_lat";
         public static final String COLUMN_COORD_LON = "coord_long";
 
+        public static final String[] PROJECTION = {
+                WeatherContract.LocationEntry.COLUMN_ID,
+                WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING,
+                WeatherContract.LocationEntry.COLUMN_CITY_NAME,
+                WeatherContract.LocationEntry.COLUMN_COORD_LAT,
+                WeatherContract.LocationEntry.COLUMN_COORD_LON
+        };
+
+        public static final int COL_LOCATION_ID = 0;
+        public static final int COL_LOCATION_SETTING = 1;
+        public static final int COL_LOCATION_CITY_NAME = 2;
+        public static final int COL_LOCATION_COORD_LAT = 3;
+        public static final int COL_LOCATION_COORD_LONG = 4;
+
         public static Uri buildLocationUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
-
     }
 
     /* Inner class that defines the table contents of the weather table */
@@ -109,8 +123,10 @@ public class WeatherContract {
 
         // Column with the foreign key into the location table.
         public static final String COLUMN_LOC_KEY = "location_id";
+
         // Date, stored as long in milliseconds since the epoch
         public static final String COLUMN_DATE = "date";
+
         // Weather id as returned by API, to identify the icon to be used
         public static final String COLUMN_WEATHER_ID = "weather_id";
 
