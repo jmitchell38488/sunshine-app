@@ -1,9 +1,17 @@
 package com.example.android.sunshine.app.util;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 
+import com.example.android.sunshine.app.MainActivity;
 import com.example.android.sunshine.app.R;
 
 /**
@@ -11,6 +19,8 @@ import com.example.android.sunshine.app.R;
  */
 
 public class Utility {
+
+    private static final String LOG_TAG = Utility.class.getSimpleName();
 
     public static String getPreferredLocation(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -102,7 +112,68 @@ public class Utility {
                 Boolean.parseBoolean(context.getString(R.string.pref_enable_notifications_default)));
 
         return displayNotifications == true;
+    }
 
+    public static boolean usePreferredLocation(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        String usePreferredKey = context.getString(R.string.pref_enable_gps_location_key);
+
+        boolean usePreferred = prefs.getBoolean(usePreferredKey,
+                Boolean.parseBoolean(context.getString(R.string.pref_enable_gps_location_default)));
+
+        return !usePreferred;
+    }
+
+    /**
+     * Method to fetch the best last location from either the GPS or Network Provider
+     * See: http://stackoverflow.com/questions/1513485/how-do-i-get-the-current-gps-location-programmatically-in-android
+     *
+     * @return the last know best location
+     */
+    public static Location getLastBestLocation(Context context) throws SecurityException {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            Log.d(LOG_TAG, "Cannot fetch best last position, permission not granted");
+            return null;
+        }
+
+        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+
+        Location locationGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        Location locationNet = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+        long GPSLocationTime = 0;
+        if (null != locationGPS) { GPSLocationTime = locationGPS.getTime(); }
+
+        long NetLocationTime = 0;
+
+        if (null != locationNet) {
+            NetLocationTime = locationNet.getTime();
+        }
+
+        if (0 < GPSLocationTime - NetLocationTime) {
+            return locationGPS;
+        } else {
+            return locationNet;
+        }
+    }
+
+    public static void checkLocationPermissions(Activity activity) {
+        // Here, thisActivity is the current activity
+        if (ActivityCompat.checkSelfPermission(activity,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+                Log.d(LOG_TAG, "Rationale required for Manifest.permission.ACCESS_FINE_LOCATION");
+            } else {
+                ActivityCompat.requestPermissions(activity,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MainActivity.PERMISSIONS_REQUEST_GPS);
+            }
+        }
     }
 
 }

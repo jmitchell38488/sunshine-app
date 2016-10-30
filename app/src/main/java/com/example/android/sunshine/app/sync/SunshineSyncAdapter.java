@@ -15,6 +15,7 @@ import android.content.SharedPreferences;
 import android.content.SyncRequest;
 import android.content.SyncResult;
 import android.database.Cursor;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -46,6 +47,8 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     public final String LOG_TAG = SunshineSyncAdapter.class.getSimpleName();
 
     private final String FORECAST_BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily";
+    private final String QUERY_LAT = "lat";
+    private final String QUERY_LON = "lon";
     private final String QUERY_PARAM = "q";
     private final String FORMAT_PARAM = "mode";
     private final String UNITS_PARAM = "units";
@@ -54,10 +57,9 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
     // Interval at which to sync with the weather, in seconds.
     // 60 seconds (1 minute) * 180 = 3 hours
-    public static final int SYNC_INTERVAL = 60;
+    public static final int SYNC_INTERVAL = 60 * 180;
     public static final int SYNC_FLEXTIME = SYNC_INTERVAL / 3;
-    //private static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
-    private static final long DAY_IN_MILLIS = 0;
+    private static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
     private static final int WEATHER_NOTIFICATION_ID = 3004;
 
     public SunshineSyncAdapter(Context context, boolean autoInitialize) {
@@ -216,18 +218,31 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
         // Will contain the raw JSON response as a string.
         String forecastJsonStr = null;
+        Location location = null;
 
         try {
-            // Construct the URL for the OpenWeatherMap query
-            // Possible parameters are available at OWM's forecast API page, at
-            // http://openweathermap.org/API#forecast
-            Uri uriBuilder = Uri.parse(FORECAST_BASE_URL).buildUpon()
-                    .appendQueryParameter(QUERY_PARAM, params[0])
-                    .appendQueryParameter(FORMAT_PARAM, params[1])
-                    .appendQueryParameter(UNITS_PARAM, params[2])
-                    .appendQueryParameter(DAYS_PARAM, params[3])
-                    .appendQueryParameter(API_KEY, BuildConfig.OPEN_WEATHER_MAP_API_KEY)
-                    .build();
+            boolean usePreferredLocation = Utility.usePreferredLocation(getContext());
+            location = Utility.getLastBestLocation(getContext());
+
+            Uri uriBuilder;
+            if (usePreferredLocation || location == null) {
+                uriBuilder = Uri.parse(FORECAST_BASE_URL).buildUpon()
+                        .appendQueryParameter(QUERY_PARAM, params[0])
+                        .appendQueryParameter(FORMAT_PARAM, params[1])
+                        .appendQueryParameter(UNITS_PARAM, params[2])
+                        .appendQueryParameter(DAYS_PARAM, params[3])
+                        .appendQueryParameter(API_KEY, BuildConfig.OPEN_WEATHER_MAP_API_KEY)
+                        .build();
+            } else {
+                uriBuilder = Uri.parse(FORECAST_BASE_URL).buildUpon()
+                        .appendQueryParameter(QUERY_LAT, "" + location.getLatitude())
+                        .appendQueryParameter(QUERY_LON, "" + location.getLongitude())
+                        .appendQueryParameter(FORMAT_PARAM, params[1])
+                        .appendQueryParameter(UNITS_PARAM, params[2])
+                        .appendQueryParameter(DAYS_PARAM, params[3])
+                        .appendQueryParameter(API_KEY, BuildConfig.OPEN_WEATHER_MAP_API_KEY)
+                        .build();
+            }
 
             url = new URL(uriBuilder.toString());
 
@@ -265,7 +280,9 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             forecastJsonStr = buffer.toString();
 
             Log.d(LOG_TAG, "JSON Output: " + forecastJsonStr);
-
+        } catch (SecurityException e) {
+            Log.e(LOG_TAG, "Error: " + e.getMessage(), e);
+            forecastJsonStr = null;
         } catch (IOException e) {
             Log.e(LOG_TAG, "Error: " + e.getMessage(), e);
             // If the code didn't successfully get the weather data, there's no point in attempting
