@@ -96,4 +96,7 @@
     <string name="pref_sync_frequency_value24_label">1 Day</string>
     <string name="pref_sync_frequency_value24_value">24</string>
 
+    <!-- Strings related to empty list -->
+    <string name="format_empty_forecast_list">No weather information available</string>
+
 </resources>
