@@ -135,6 +135,9 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor> 
         // Set icon
         viewHolder.iconView.setImageResource(Utility.getArtResourceForWeatherCondition((int) weatherModel.getWeatherId()));
 
+        // Set accessibility property
+        viewHolder.iconView.setContentDescription(weatherModel.getDescription());
+
         // Set day
         viewHolder.dayView.setText(weatherModel.getDayName(context));
 

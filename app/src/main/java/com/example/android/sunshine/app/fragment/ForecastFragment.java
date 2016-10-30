@@ -1,5 +1,9 @@
 package com.example.android.sunshine.app.fragment;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -19,9 +23,11 @@ import android.widget.ListView;
 
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.WeatherContract;
+import com.example.android.sunshine.app.service.SunshineAlarmReceiver;
 import com.example.android.sunshine.app.sync.FetchWeatherTask;
 import com.example.android.sunshine.app.util.Utility;
 import com.example.android.sunshine.app.sync.ForecastAdapter;
+import com.example.android.sunshine.app.service.SunshineService;
 
 /**
  * Created by justinmitchell on 25/10/2016.
@@ -35,6 +41,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     private ForecastAdapter mForecastAdapter;
     private ListView mListView;
     private int mPosition = ListView.INVALID_POSITION;
+    private boolean mUseTodayLayout;
 
     public interface Callback {
         public void onItemSelected(Uri dateUri);
@@ -75,11 +82,12 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     private void updateWeather() {
         try {
-            String location = Utility.getPreferredLocation(getActivity());
-            String unitType = Utility.getUnitType(getActivity());
+            Intent alarmIntent = new Intent(getActivity(), SunshineAlarmReceiver.class);
+            alarmIntent.putExtra(SunshineService.LOCATION_QUERY_EXTRA, Utility.getPreferredLocation(getActivity()));
 
-            FetchWeatherTask weatherTask = new FetchWeatherTask(getContext());
-            weatherTask.execute(location, "json", unitType, "14");
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(getActivity(), 0, alarmIntent, PendingIntent.FLAG_ONE_SHOT);
+            AlarmManager alarmManager = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE);
+            alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 5000, pendingIntent);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Error while updating weather, " + e.getMessage(), e);
         }
@@ -129,6 +137,8 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
             // swapout in onLoadFinished.
             mPosition = savedInstanceState.getInt(SELECTED_KEY);
         }
+
+        mForecastAdapter.setUseTodayLayout(mUseTodayLayout);
 
         return rootView;
     }
@@ -197,4 +207,12 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         }
         super.onSaveInstanceState(outState);
     }
+
+    public void setUseTodayLayout(boolean useTodayLayout) {
+        this.mUseTodayLayout = useTodayLayout;
+        if (mForecastAdapter != null) {
+            mForecastAdapter.setUseTodayLayout(mUseTodayLayout);
+        }
+    }
+
 }

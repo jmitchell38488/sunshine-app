@@ -21,13 +21,19 @@ public class ForecastAdapter extends CursorAdapter {
     private final int VIEW_TYPE_TODAY = 0;
     private final int VIEW_TYPE_FUTURE_DAY = 1;
 
+    private boolean mUseTodayLayout = true;
+
     public ForecastAdapter(Context context, Cursor cursor, int flags) {
         super(context, cursor, flags);
     }
 
+    public void setUseTodayLayout(boolean useTodayLayout) {
+        this.mUseTodayLayout = useTodayLayout;
+    }
+
     @Override
     public int getItemViewType(int position) {
-        return (position == 0) ? VIEW_TYPE_TODAY : VIEW_TYPE_FUTURE_DAY;
+        return (position == 0 && mUseTodayLayout) ? VIEW_TYPE_TODAY : VIEW_TYPE_FUTURE_DAY;
     }
 
     @Override
@@ -73,6 +79,9 @@ public class ForecastAdapter extends CursorAdapter {
                 break;
             }
         }
+
+        // Set accessibility property
+        listItemViewHolder.iconView.setContentDescription(weatherModel.getDescription());
 
         // Set date
         listItemViewHolder.dateView.setText(weatherModel.getFriendlyDayString(context));
