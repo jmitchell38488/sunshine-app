@@ -21,6 +21,7 @@ import android.net.Uri;
 
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.WeatherContract;
+import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.data.model.WeatherModel;
 import com.example.android.sunshine.app.util.Utility;
 import com.example.android.sunshine.app.view.DetailsViewHolder;
@@ -124,6 +125,9 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor> 
         WeatherModel weatherModel = new WeatherModel();
         weatherModel.loadFromCursor(cursor);
 
+        LocationModel locationModel = new LocationModel();
+        locationModel.loadFromCursor(cursor);
+
         long weatherId = weatherModel.getWeatherId();
         DetailsViewHolder viewHolder = (DetailsViewHolder) getView().getTag();
         Context context = getActivity();
@@ -161,6 +165,11 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor> 
 
         // Set wind details
         viewHolder.windView.setText(weatherModel.getFormattedWindDetails(context));
+
+        // Set location
+        if (viewHolder.locationView != null) {
+            viewHolder.locationView.setText(locationModel.getCityName());
+        }
 
         // If onCreateOptionsMenu has already happened, we need to update the share intent now.
         if (mShareActionProvider != null) {

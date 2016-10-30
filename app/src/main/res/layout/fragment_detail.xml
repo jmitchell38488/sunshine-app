@@ -11,14 +11,22 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Header: Day, Date -->
+        <!-- Header: Location, Day, Date -->
+        <TextView
+            android:fontFamily="sans-serif-condensed"
+            android:id="@+id/detail_location_textview"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:textColor="@color/black"
+            android:textAppearance="?android:textAppearanceLarge" />
+
         <TextView
             android:fontFamily="sans-serif-condensed"
             android:id="@+id/detail_day_textview"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:textColor="@color/black"
-            android:textSize="24sp" />
+            android:textSize="28sp" />
 
         <TextView
             android:fontFamily="sans-serif-condensed"
@@ -26,7 +34,7 @@
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:textColor="@color/grey_700"
-            android:textSize="16sp" />
+            android:textSize="24sp" />
 
         <!-- Main content: high, low, art, weather state -->
         <LinearLayout
@@ -91,21 +99,21 @@
                 android:id="@+id/detail_humidity_textview"
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
-                android:textAppearance="?android:textAppearanceLarge" />
+                android:textAppearance="?android:textAppearanceMedium" />
 
             <TextView
                 android:id="@+id/detail_pressure_textview"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:layout_width="match_parent"
-                android:textAppearance="?android:textAppearanceLarge" />
+                android:textAppearance="?android:textAppearanceMedium" />
 
             <TextView
                 android:id="@+id/detail_wind_textview"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:layout_width="match_parent"
-                android:textAppearance="?android:textAppearanceLarge" />
+                android:textAppearance="?android:textAppearanceMedium" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

@@ -34,8 +34,8 @@ public class DetailsViewHolder {
         pressureView = (TextView) view.findViewById(R.id.detail_pressure_textview);
         windView = (TextView) view.findViewById(R.id.detail_wind_textview);
 
-        if (view.findViewById(R.id.list_item_location_textview) != null) {
-            locationView = (TextView) view.findViewById(R.id.list_item_location_textview);
+        if (view.findViewById(R.id.detail_location_textview) != null) {
+            locationView = (TextView) view.findViewById(R.id.detail_location_textview);
         } else {
             locationView = null;
         }
