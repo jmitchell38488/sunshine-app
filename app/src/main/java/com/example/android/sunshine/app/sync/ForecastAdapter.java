@@ -7,7 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.android.sunshine.app.ForecastFragment;
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.model.WeatherModel;
 import com.example.android.sunshine.app.util.Utility;
