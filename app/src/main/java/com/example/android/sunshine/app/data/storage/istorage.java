@@ -20,6 +20,10 @@ public interface IStorage {
 
     public Cursor getLocation(String[] projection, String selection, String[] selectionArgs, String sortOrder);
 
+    public Cursor getCurrentConditions(String[] projection, String selection, String[] selectionArgs, String sortOrder);
+
+    public Cursor getCurrentConditionsWithLocationId(Uri uri, String[] projection, String sortOrder);
+
     public StorageType getType();
 
     public long insert(String tableName, ContentValues contentValues);

@@ -258,7 +258,7 @@ public class Utility {
         if (activeNetwork == null) {
             return false;
         }
-        
+
         boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
         boolean isWiFi = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
 

@@ -29,6 +29,7 @@ import com.example.android.sunshine.app.BuildConfig;
 import com.example.android.sunshine.app.MainActivity;
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.WeatherContract;
+import com.example.android.sunshine.app.data.model.CurrentConditionsModel;
 import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.data.model.WeatherModel;
 import com.example.android.sunshine.app.util.Utility;
@@ -41,12 +42,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     public final String LOG_TAG = SunshineSyncAdapter.class.getSimpleName();
 
     private final String FORECAST_BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily";
+    private final String CURRENT_CONDITIONS_BASE_URL = "http://api.openweathermap.org/data/2.5/weather";
     private final String QUERY_LAT = "lat";
     private final String QUERY_LON = "lon";
     private final String QUERY_PARAM = "q";
@@ -68,6 +71,15 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(LOG_TAG, "onPerformSync");
+        long locationId = syncForecastData();
+        syncCurrentData(locationId);
+
+        Log.d(LOG_TAG, "Triggering notifyWeather");
+        notifyWeather();
+    }
+
+    private long syncForecastData() {
+        long locationId = 0;
 
         try {
             String[] params = new String[] {
@@ -77,7 +89,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                     "14"
             };
 
-            String forecastJsonStr = fetchRawJsonFromUrl(params);
+            String forecastJsonStr = fetchForecastJson(params);
 
             if (forecastJsonStr == null || forecastJsonStr.isEmpty()) {
                 throw new JSONException("Could not parse JSON content, no response data");
@@ -90,7 +102,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             LocationModel locationItem = weatherParser.convertLocationData(params[0]);
 
             // Save location to data store
-            long locationId = addLocation(locationItem);
+            locationId = addLocation(locationItem);
 
             // Update weather models with location id
             for (WeatherModel item : weatherItems) {
@@ -102,9 +114,42 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
             // Remove expired items from the data store
             removeOldWeatherItems();
+        } catch (JSONException e) {
+            Log.e(LOG_TAG, e.getMessage(), e);
+            e.printStackTrace();
+        } catch (IOException e) {
+            Log.e(LOG_TAG, e.getMessage(), e);
+            e.printStackTrace();
+        }
 
-            Log.d(LOG_TAG, "Triggering notifyWeather");
-            notifyWeather();
+        return locationId;
+    }
+
+    private void syncCurrentData(long locationId) {
+        try {
+            String[] params = new String[] {
+                    Utility.getPreferredLocation(getContext()),
+                    "json",
+                    Utility.getUnitType(getContext())
+            };
+
+            String currentJsonStr = fetchCurrentConditionsJson(params);
+
+            if (currentJsonStr == null || currentJsonStr.isEmpty()) {
+                throw new JSONException("Could not parse JSON content, no response data");
+            }
+
+            WeatherDataParser weatherParser = new WeatherDataParser(currentJsonStr);
+
+            // Convert the records to objects
+            CurrentConditionsModel currentModel = weatherParser.convertCurrentConditionsData();
+            currentModel.setLocationId(locationId);
+
+            // Save current conditions to the data store
+            addCurrentCondition(currentModel);
+
+            // Remove expired items from the data store
+            //removeOldCurrentConditionsItems(locationId);
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
             e.printStackTrace();
@@ -130,6 +175,26 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 new String[] {Long.toString(dayTime.setJulianDay(julianStartDay-1))});
     }
 
+    private void removeOldCurrentConditionsItems(long locationId) {
+        // Initialize the date/time objects
+        Time dayTime = new Time();
+        dayTime.setToNow();
+
+        // we start at the day returned by local time. Otherwise this is a mess.
+        int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
+
+        // now we work exclusively in UTC
+        dayTime = new Time();
+
+        getContext().getContentResolver().delete(WeatherContract.CurrentConditionsEntry.CONTENT_URI,
+                WeatherContract.CurrentConditionsEntry.COLUMN_DATE + " <= ? AND " +
+                WeatherContract.CurrentConditionsEntry.COLUMN_LOC_KEY + " = ?",
+                new String[] {
+                        Long.toString(dayTime.setJulianDay(julianStartDay-1)),
+                        Long.toString(locationId)
+                });
+    }
+
     private void notifyWeather() {
         Context context = getContext();
         //checking the last update and notify if it' the first of the day
@@ -146,9 +211,9 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         // Get the notification time with the sync frequency minus 1 minute so that it will always notify
         long weatherNotificationDetail = (Long.parseLong(Utility.getSyncFrequency(context)) * 3600) - 60;
 
-        if (System.currentTimeMillis() - lastSync < weatherNotificationDetail) {
+        /*if (System.currentTimeMillis() - lastSync < weatherNotificationDetail) {
             return;
-        }
+        }*/
 
         // Last sync was more than 1 day ago, let's send a notification with the weather.
         String locationQuery = Utility.getPreferredLocation(context);
@@ -160,17 +225,46 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
         if (cursor.moveToFirst()) {
             WeatherModel weatherModel = new WeatherModel();
+            CurrentConditionsModel currentModel = null;
+
             weatherModel.loadFromCursor(cursor);
+
+            Uri currentUri = WeatherContract.CurrentConditionsEntry.buildCurrentConditionsUri(weatherModel.getLocationId());
+            Cursor conditionsCursor = context.getContentResolver().query(
+                    currentUri,
+                    WeatherContract.CurrentConditionsEntry.FORECAST_COLUMNS,
+                    WeatherContract.CurrentConditionsEntry.COLUMN_LOC_KEY + " = ?",
+                    new String[] {
+                            Long.toString(weatherModel.getLocationId())
+                    },
+                    WeatherContract.CurrentConditionsEntry.COLUMN_DATE + " DESC"
+            );
+
+            if (conditionsCursor != null && conditionsCursor.moveToFirst()) {
+                currentModel = new CurrentConditionsModel();
+                currentModel.loadFromCursor(conditionsCursor);
+            }
 
             int iconId = Utility.getIconResourceForWeatherCondition((int) weatherModel.getWeatherId());
             String title = context.getString(R.string.app_name);
 
             // Define the text of the forecast.
-            String contentText = String.format(
-                    context.getString(R.string.format_notification),
-                    weatherModel.getDescription(),
-                    weatherModel.getFormattedMaxTemperature(context, weatherModel.isMetric(context)),
-                    weatherModel.getFormattedMinTemperature(context, weatherModel.isMetric(context)));
+            String contentText = "";
+            if (currentModel == null) {
+                contentText = String.format(
+                        context.getString(R.string.format_notification),
+                        weatherModel.getDescription(),
+                        weatherModel.getFormattedMaxTemperature(context, weatherModel.isMetric(context)),
+                        weatherModel.getFormattedMinTemperature(context, weatherModel.isMetric(context)));
+            } else {
+                contentText = String.format(
+                        context.getString(R.string.format_notification_current),
+                        currentModel.getFormattedCurrentTemperature(context, currentModel.isMetric(context)),
+                        currentModel.getDescription(),
+                        weatherModel.getDescription(),
+                        weatherModel.getFormattedMaxTemperature(context, weatherModel.isMetric(context)),
+                        weatherModel.getFormattedMinTemperature(context, weatherModel.isMetric(context)));
+            }
 
             Log.d(LOG_TAG, "Notification (" + contentText + ")");
 
@@ -213,15 +307,11 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
      * @param params
      * @return
      */
-    protected String fetchRawJsonFromUrl(String... params) {
-        // These two need to be declared outside the try/catch
-        // so that they can be closed in the finally block.
-        HttpURLConnection urlConnection = null;
+    protected String fetchForecastJson(String... params) {
         URL url;
-        BufferedReader reader = null;
 
         // Will contain the raw JSON response as a string.
-        String forecastJsonStr = null;
+        String jsonStr = null;
         Location location = null;
 
         try {
@@ -250,9 +340,66 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
             url = new URL(uriBuilder.toString());
 
-            Log.d(LOG_TAG, "API URL: " + uriBuilder.toString());
+            jsonStr = fetchJsonFromUrl(url);
+        } catch (MalformedURLException e) {
+            Log.e(LOG_TAG, "Could not fetch JSON from URL", e);
+        }
 
+        return jsonStr;
+    }/**
+     * Helper method to fetch the raw JSON data from the Open Weather API
+     * @param params
+     * @return
+     */
+    protected String fetchCurrentConditionsJson(String... params) {
+        URL url;
 
+        // Will contain the raw JSON response as a string.
+        String jsonStr = null;
+        Location location = null;
+
+        try {
+            boolean usePreferredLocation = Utility.usePreferredLocation(getContext());
+            location = Utility.getLastBestLocation(getContext());
+
+            Uri uriBuilder;
+            if (usePreferredLocation || location == null) {
+                uriBuilder = Uri.parse(CURRENT_CONDITIONS_BASE_URL).buildUpon()
+                        .appendQueryParameter(QUERY_PARAM, params[0])
+                        .appendQueryParameter(FORMAT_PARAM, params[1])
+                        .appendQueryParameter(UNITS_PARAM, params[2])
+                        .appendQueryParameter(API_KEY, BuildConfig.OPEN_WEATHER_MAP_API_KEY)
+                        .build();
+            } else {
+                uriBuilder = Uri.parse(CURRENT_CONDITIONS_BASE_URL).buildUpon()
+                        .appendQueryParameter(QUERY_LAT, "" + location.getLatitude())
+                        .appendQueryParameter(QUERY_LON, "" + location.getLongitude())
+                        .appendQueryParameter(FORMAT_PARAM, params[1])
+                        .appendQueryParameter(UNITS_PARAM, params[2])
+                        .appendQueryParameter(API_KEY, BuildConfig.OPEN_WEATHER_MAP_API_KEY)
+                        .build();
+            }
+
+            url = new URL(uriBuilder.toString());
+
+            jsonStr = fetchJsonFromUrl(url);
+        } catch (MalformedURLException e) {
+            Log.e(LOG_TAG, "Could not fetch JSON from URL", e);
+        }
+
+        return jsonStr;
+    }
+
+    private String fetchJsonFromUrl(URL url) {
+        // These two need to be declared outside the try/catch
+        // so that they can be closed in the finally block.
+        HttpURLConnection urlConnection = null;
+        BufferedReader reader = null;
+
+        // Will contain the raw JSON response as a string.
+        String jsonPackage = null;
+
+        try {
             // Create the request to OpenWeatherMap, and open the connection
             urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("GET");
@@ -263,7 +410,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             StringBuffer buffer = new StringBuffer();
             if (inputStream == null) {
                 // Nothing to do.
-                forecastJsonStr = null;
+                jsonPackage = null;
             }
 
             reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -281,17 +428,17 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 return null;
             }
 
-            forecastJsonStr = buffer.toString();
+            jsonPackage = buffer.toString();
 
-            Log.d(LOG_TAG, "JSON Output: " + forecastJsonStr);
+            Log.d(LOG_TAG, "JSON Output: " + jsonPackage);
         } catch (SecurityException e) {
             Log.e(LOG_TAG, "Error: " + e.getMessage(), e);
-            forecastJsonStr = null;
+            jsonPackage = null;
         } catch (IOException e) {
             Log.e(LOG_TAG, "Error: " + e.getMessage(), e);
             // If the code didn't successfully get the weather data, there's no point in attempting
             // to parse it.
-            forecastJsonStr = null;
+            jsonPackage = null;
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
@@ -305,7 +452,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             }
         }
 
-        return forecastJsonStr;
+        return jsonPackage;
     }
 
     public long addLocation(LocationModel locationModel) {
@@ -386,6 +533,26 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         }
 
         return insertedRows;
+    }
+
+    public int addCurrentCondition(CurrentConditionsModel currentModel) throws IOException {
+        if (currentModel == null) {
+            throw new IOException("Invalid CurrentConditionsModel");
+        }
+
+        ContentValues values = currentModel.toContentValues();
+
+        int insertedRows = 0;
+        Uri returnUri = getContext().getContentResolver().insert(
+                WeatherContract.CurrentConditionsEntry.CONTENT_URI,
+                values
+        );
+
+        if (returnUri == null) {
+            return 0;
+        }
+
+        return 1;
     }
 
     /**

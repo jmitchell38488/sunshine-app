@@ -27,37 +27,37 @@ public class WeatherModel {
     private static final String DATE_FORMAT = "yyyyMMdd";
 
     // _id
-    private int id;
+    protected int id;
 
     // location_id
-    private long locationId;
+    protected long locationId;
 
     // dateTime
-    private long dateTime;
+    protected long dateTime;
 
     // weather_id
-    private long weatherId;
+    protected long weatherId;
 
     // short_desc
-    private String description;
+    protected String description;
 
     // low
-    private double low;
+    protected double low;
 
     // high
-    private double high;
+    protected double high;
 
     // humidity
-    private double humidity;
+    protected double humidity;
 
     // pressure
-    private double pressure;
+    protected double pressure;
 
     // windSpeed
-    private double windSpeed;
+    protected double windSpeed;
 
     // windDirection
-    private double windDirection;
+    protected double windDirection;
 
     public WeatherModel() {
         // Do nothing

@@ -180,7 +180,8 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         String locationSetting = Utility.getPreferredLocation(getActivity());
 
         // Sort order:  Ascending, by date.
-        String sortOrder = WeatherContract.WeatherEntry.COLUMN_DATE + " ASC";
+        String sortOrder = WeatherContract.WeatherEntry.TABLE_NAME + "."
+                + WeatherContract.WeatherEntry.COLUMN_DATE + " ASC";
         Uri weatherForLocationUri = WeatherContract.WeatherEntry.buildWeatherLocationWithStartDate(
                 locationSetting, System.currentTimeMillis());
 
@@ -201,7 +202,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         }
 
         // No records
-        if (cursor.getCount() == 0) {
+        if (cursor != null && cursor.getCount() == 0) {
             updateEmptyView();
         }
     }

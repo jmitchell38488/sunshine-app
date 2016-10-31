@@ -2,6 +2,7 @@ package com.example.android.sunshine.app.util;
 
 import android.text.format.Time;
 
+import com.example.android.sunshine.app.data.model.CurrentConditionsModel;
 import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.data.model.WeatherModel;
 
@@ -119,6 +120,67 @@ public class WeatherDataParser {
         model.setLocationSetting(locationSetting);
 
         return model;
+    }
+
+    /**
+     * Take the String representing the complete forecast in JSON Format and
+     * pull out the data we need to construct the Strings needed for the wireframes.
+     *
+     * Fortunately parsing is easy:  constructor takes the JSON string and converts it
+     * into an Object hierarchy for us.
+     */
+    public CurrentConditionsModel convertCurrentConditionsData() throws JSONException {
+        // These are the names of the JSON objects that need to be extracted.
+        final String OWM_WEATHER = "weather";
+        final String OWM_MAIN = "main";
+        final String OWM_WIND = "wind";
+        final String OWM_TEMPERATURE = "temp";
+        final String OWM_WEATHER_ID = "id";
+        final String OWM_WEATHER_DESC = "main";
+        final String OWM_TEMP_MIN = "temp_min";
+        final String OWM_TEMP_MAX = "temp_max";
+        final String OWM_PRESSURE = "pressure";
+        final String OWM_HUMIDITY = "humidity";
+        final String OWM_WIND_SPEED = "speed";
+        final String OWM_WIND_DIR = "deg";
+
+        // OWM returns daily forecasts based upon the local time of the city that is being
+        // asked for, which means that we need to know the GMT offset to translate this data
+        // properly.
+
+        // Since this data is also sent in-order and the first day is always the
+        // current day, we're going to take advantage of that to get a nice
+        // normalized UTC date for all of our weather.
+
+        Time dayTime = new Time();
+        dayTime.setToNow();
+
+        // we start at the day returned by local time. Otherwise this is a mess.
+        int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
+
+        CurrentConditionsModel currentModel = new CurrentConditionsModel();
+
+        currentModel.setDateTime(julianStartDay);
+
+        // Get the JSON object representing the day
+        JSONObject weatherObj = (JSONObject) forecastJson.getJSONArray(OWM_WEATHER).get(0);
+        JSONObject mainObj = forecastJson.getJSONObject(OWM_MAIN);
+        JSONObject windObj = forecastJson.getJSONObject(OWM_WIND);
+
+        // Update Current Conditions Model
+        currentModel.setId(0);
+        currentModel.setLocationId(0);
+        currentModel.setWeatherId(weatherObj.getInt(OWM_WEATHER_ID));
+        currentModel.setDescription(weatherObj.getString(OWM_WEATHER_DESC));
+        currentModel.setTemp(mainObj.getDouble(OWM_TEMPERATURE));
+        currentModel.setLow(mainObj.getDouble(OWM_TEMP_MIN));
+        currentModel.setHigh(mainObj.getDouble(OWM_TEMP_MAX));
+        currentModel.setHumidity(mainObj.getDouble(OWM_HUMIDITY));
+        currentModel.setPressure(mainObj.getDouble(OWM_PRESSURE));
+        currentModel.setWindSpeed(windObj.getDouble(OWM_WIND_SPEED));
+        currentModel.setWindDirection(windObj.getInt(OWM_WIND_DIR));
+
+        return currentModel;
     }
 
 }

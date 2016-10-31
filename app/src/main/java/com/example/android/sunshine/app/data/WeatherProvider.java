@@ -25,14 +25,16 @@ public class WeatherProvider extends ContentProvider {
     static final int WEATHER_WITH_LOCATION = 101;
     static final int WEATHER_WITH_LOCATION_AND_DATE = 102;
     static final int LOCATION = 300;
+    static final int CURRENT_CONDITIONS = 400;
+    static final int CURRENT_WITH_ID = 401;
 
     @Override
     public boolean onCreate() {
         weatherStorage = WeatherStorageFactory.getDataStorageAccessor(getContext());
         return true;
     }
-
     @Override
+
     @TargetApi(11)
     public void shutdown() {
         weatherStorage.close();
@@ -66,6 +68,18 @@ public class WeatherProvider extends ContentProvider {
             // "location"
             case LOCATION: {
                 retCursor = weatherStorage.getLocation(projection, selection, selectionArgs, sortOrder);
+                break;
+            }
+
+            // "current"
+            case CURRENT_CONDITIONS: {
+                retCursor = weatherStorage.getCurrentConditions(projection, selection, selectionArgs, sortOrder);
+                break;
+            }
+
+            // "current"
+            case CURRENT_WITH_ID: {
+                retCursor = weatherStorage.getCurrentConditionsWithLocationId(uri, projection, sortOrder);
                 break;
             }
 
@@ -109,6 +123,18 @@ public class WeatherProvider extends ContentProvider {
                 break;
             }
 
+            case CURRENT_CONDITIONS: {
+                long id = weatherStorage.insert(WeatherContract.CurrentConditionsEntry.TABLE_NAME, contentValues);
+
+                if (id > 0) {
+                    returnUri = WeatherContract.CurrentConditionsEntry.buildCurrentConditionsUri(id);
+                } else {
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
+
+                break;
+            }
+
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -134,6 +160,10 @@ public class WeatherProvider extends ContentProvider {
 
             case LOCATION:
                 rowsDeleted = weatherStorage.delete(WeatherContract.LocationEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+
+            case CURRENT_CONDITIONS:
+                rowsDeleted = weatherStorage.delete(WeatherContract.CurrentConditionsEntry.TABLE_NAME, selection, selectionArgs);
                 break;
 
             default:
@@ -163,6 +193,10 @@ public class WeatherProvider extends ContentProvider {
                 rowsUpdated = weatherStorage.update(WeatherContract.LocationEntry.TABLE_NAME, values, selection, selectionArgs);
                 break;
 
+            case CURRENT_CONDITIONS:
+                rowsUpdated = weatherStorage.update(WeatherContract.CurrentConditionsEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
+
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -177,6 +211,7 @@ public class WeatherProvider extends ContentProvider {
     @Override
     public int bulkInsert(Uri uri, ContentValues[] values) {
         final int match = sUriMatcher.match(uri);
+        int returnCount = 0;
 
         switch (match) {
             case WEATHER:
@@ -184,9 +219,19 @@ public class WeatherProvider extends ContentProvider {
                     normalizeDate(recordSet);
                 }
 
-                int returnCount = weatherStorage.bulkInsert(WeatherContract.WeatherEntry.TABLE_NAME, values);
+                returnCount = weatherStorage.bulkInsert(WeatherContract.WeatherEntry.TABLE_NAME, values);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return returnCount;
+
+            case CURRENT_CONDITIONS:
+                for (ContentValues recordSet : values) {
+                    normalizeDate(recordSet);
+                }
+
+                returnCount = weatherStorage.bulkInsert(WeatherContract.CurrentConditionsEntry.TABLE_NAME, values);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return returnCount;
+
             default:
                 return super.bulkInsert(uri, values);
         }
@@ -215,6 +260,10 @@ public class WeatherProvider extends ContentProvider {
                 return WeatherContract.WeatherEntry.CONTENT_TYPE;
             case LOCATION:
                 return WeatherContract.LocationEntry.CONTENT_TYPE;
+            case CURRENT_CONDITIONS:
+                return WeatherContract.CurrentConditionsEntry.CONTENT_TYPE;
+            case CURRENT_WITH_ID:
+                return WeatherContract.CurrentConditionsEntry.CONTENT_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -241,6 +290,9 @@ public class WeatherProvider extends ContentProvider {
         matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*/#", WEATHER_WITH_LOCATION_AND_DATE);
 
         matcher.addURI(authority, WeatherContract.PATH_LOCATION, LOCATION);
+
+        matcher.addURI(authority, WeatherContract.PATH_CURRENT, CURRENT_CONDITIONS);
+        matcher.addURI(authority, WeatherContract.PATH_CURRENT + "/#", CURRENT_WITH_ID);
         return matcher;
     }
 

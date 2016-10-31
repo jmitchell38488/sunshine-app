@@ -2,12 +2,15 @@ package com.example.android.sunshine.app.sync;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.android.sunshine.app.R;
+import com.example.android.sunshine.app.data.WeatherContract;
+import com.example.android.sunshine.app.data.model.CurrentConditionsModel;
 import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.data.model.WeatherModel;
 import com.example.android.sunshine.app.util.Utility;
@@ -68,12 +71,33 @@ public class ForecastAdapter extends CursorAdapter {
         LocationModel locationModel = new LocationModel();
         locationModel.loadFromCursor(cursor);
 
+        CurrentConditionsModel currentModel = null;
+
         ListItemViewHolder listItemViewHolder = (ListItemViewHolder) view.getTag();
         boolean isMetric = Utility.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
-
-        // Set icon
         int viewType = getItemViewType(cursor.getPosition());
 
+        // We only want to do this on "TODAY"
+        if (viewType == VIEW_TYPE_TODAY || listItemViewHolder.currentTempView != null) {
+            // Fetch the current conditions
+            Uri currentUri = WeatherContract.CurrentConditionsEntry.buildCurrentConditionsUri(weatherModel.getLocationId());
+            Cursor conditionsCursor = context.getContentResolver().query(
+                    currentUri,
+                    WeatherContract.CurrentConditionsEntry.FORECAST_COLUMNS,
+                    WeatherContract.CurrentConditionsEntry.COLUMN_LOC_KEY + " = ?",
+                    new String[]{
+                            Long.toString(weatherModel.getLocationId())
+                    },
+                    WeatherContract.CurrentConditionsEntry.COLUMN_DATE + " DESC"
+            );
+
+            if (conditionsCursor != null && conditionsCursor.moveToFirst()) {
+                currentModel = new CurrentConditionsModel();
+                currentModel.loadFromCursor(conditionsCursor);
+            }
+        }
+
+        // Set icon
         switch (viewType) {
             case VIEW_TYPE_TODAY: {
                 listItemViewHolder.iconView.setImageResource(Utility.getArtResourceForWeatherCondition((int) weatherModel.getWeatherId()));
@@ -90,6 +114,18 @@ public class ForecastAdapter extends CursorAdapter {
 
         // Set date
         listItemViewHolder.dateView.setText(weatherModel.getFriendlyDayString(context));
+
+        // If there are no current conditions, make sure to shift the high/low to the higher priority views
+        if (currentModel == null) {
+            if (viewType == VIEW_TYPE_TODAY) {
+                listItemViewHolder.highTempView.setTextSize(72);
+                listItemViewHolder.lowTempView.setTextSize(36);
+                listItemViewHolder.currentTempView.setEnabled(false);
+            }
+        } else if (listItemViewHolder.currentTempView != null) {
+            // Set current high
+            listItemViewHolder.currentTempView.setText(currentModel.getFormattedCurrentTemperature(context, isMetric));
+        }
 
         // Set temperature high
         listItemViewHolder.highTempView.setText(weatherModel.getFormattedMaxTemperature(context, isMetric));
