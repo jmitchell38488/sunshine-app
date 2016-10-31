@@ -211,9 +211,9 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         // Get the notification time with the sync frequency minus 1 minute so that it will always notify
         long weatherNotificationDetail = (Long.parseLong(Utility.getSyncFrequency(context)) * 3600) - 60;
 
-        /*if (System.currentTimeMillis() - lastSync < weatherNotificationDetail) {
+        if (System.currentTimeMillis() - lastSync < weatherNotificationDetail) {
             return;
-        }*/
+        }
 
         // Last sync was more than 1 day ago, let's send a notification with the weather.
         String locationQuery = Utility.getPreferredLocation(context);
