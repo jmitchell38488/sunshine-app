@@ -232,6 +232,18 @@ public class WeatherContract {
                     .appendPath(Long.toString(normalizeDate(date))).build();
         }
 
+        public static Uri buildWeatherToday(long locationId) {
+            return CONTENT_URI.buildUpon().appendPath(Long.toString(locationId))
+                    .appendPath("today")
+                    .build();
+        }
+
+        public static Uri buildWeatherToday(String locationSetting) {
+            return CONTENT_URI.buildUpon().appendPath(locationSetting)
+                    .appendPath("today")
+                    .build();
+        }
+
         public static String getLocationSettingFromUri(Uri uri) {
             return uri.getPathSegments().get(1);
         }
