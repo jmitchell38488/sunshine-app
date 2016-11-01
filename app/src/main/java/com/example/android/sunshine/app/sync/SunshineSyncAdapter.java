@@ -32,6 +32,7 @@ import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.data.model.CurrentConditionsModel;
 import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.data.model.WeatherModel;
+import com.example.android.sunshine.app.util.Preferences;
 import com.example.android.sunshine.app.util.Utility;
 import com.example.android.sunshine.app.util.WeatherDataParser;
 
@@ -71,11 +72,17 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(LOG_TAG, "onPerformSync");
-        long locationId = syncForecastData();
-        syncCurrentData(locationId);
 
-        Log.d(LOG_TAG, "Triggering notifyWeather");
-        notifyWeather();
+        long locationId = syncForecastData();
+
+        if (locationId > 0) {
+            Preferences.setLastUsedLocation(getContext(), locationId);
+            Preferences.setLastSyncTimeNow(getContext());
+            syncCurrentData(locationId);
+
+            Log.d(LOG_TAG, "Triggering notifyWeather");
+            notifyWeather();
+        }
     }
 
     private long syncForecastData() {
@@ -83,9 +90,9 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
         try {
             String[] params = new String[] {
-                    Utility.getPreferredLocation(getContext()),
+                    Preferences.getPreferredLocation(getContext()),
                     "json",
-                    Utility.getUnitType(getContext()),
+                    Preferences.getUnitType(getContext()),
                     "14"
             };
 
@@ -128,9 +135,9 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     private void syncCurrentData(long locationId) {
         try {
             String[] params = new String[] {
-                    Utility.getPreferredLocation(getContext()),
+                    Preferences.getPreferredLocation(getContext()),
                     "json",
-                    Utility.getUnitType(getContext())
+                    Preferences.getUnitType(getContext())
             };
 
             String currentJsonStr = fetchCurrentConditionsJson(params);
@@ -201,7 +208,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
         // Don't notify if the user has disabled notifications
-        if (!Utility.userDisplayNotifications(context)) {
+        if (!Preferences.userDisplayNotifications(context)) {
             return;
         }
 
@@ -209,14 +216,14 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         long lastSync = prefs.getLong(lastNotificationKey, 0);
 
         // Get the notification time with the sync frequency minus 1 minute so that it will always notify
-        long weatherNotificationDetail = (Long.parseLong(Utility.getSyncFrequency(context)) * 3600) - 60;
+        long weatherNotificationDetail = (Long.parseLong(Preferences.getSyncFrequency(context)) * 3600) - 60;
 
         if (System.currentTimeMillis() - lastSync < weatherNotificationDetail) {
             return;
         }
 
         // Last sync was more than 1 day ago, let's send a notification with the weather.
-        String locationQuery = Utility.getPreferredLocation(context);
+        String locationQuery = Preferences.getPreferredLocation(context);
 
         Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
 
@@ -315,7 +322,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         Location location = null;
 
         try {
-            boolean usePreferredLocation = Utility.usePreferredLocation(getContext());
+            boolean usePreferredLocation = Preferences.usePreferredLocation(getContext());
             location = Utility.getLastBestLocation(getContext());
 
             Uri uriBuilder;
@@ -359,7 +366,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         Location location = null;
 
         try {
-            boolean usePreferredLocation = Utility.usePreferredLocation(getContext());
+            boolean usePreferredLocation = Preferences.usePreferredLocation(getContext());
             location = Utility.getLastBestLocation(getContext());
 
             Uri uriBuilder;
@@ -577,12 +584,10 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
      */
     public static Account getSyncAccount(Context context) {
         // Get an instance of the Android account manager
-        AccountManager accountManager =
-                (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
+        AccountManager accountManager = (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
 
         // Create the account type and default account
-        Account newAccount = new Account(
-                context.getString(R.string.app_name), context.getString(R.string.sync_account_type));
+        Account newAccount = new Account(context.getString(R.string.app_name), context.getString(R.string.sync_account_type));
 
         // If the password doesn't exist, the account doesn't exist
         if (accountManager.getPassword(newAccount) == null) {
@@ -628,7 +633,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
     private static void onAccountCreated(Account newAccount, Context context) {
         // Get the sync interval in hours, make sure to multiply by seconds (3600: 1 hour)
-        int syncInterval = Integer.parseInt(Utility.getSyncFrequency(context)) * 3600;
+        int syncInterval = Integer.parseInt(Preferences.getSyncFrequency(context)) * 3600;
         int syncFlex = (int)((double)syncInterval * SYNC_FLEXTIME);
 
         /*
