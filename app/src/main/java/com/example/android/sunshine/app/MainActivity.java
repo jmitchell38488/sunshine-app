@@ -10,6 +10,7 @@ import android.view.MenuItem;
 
 import com.example.android.sunshine.app.fragment.TodayFragment;
 import com.example.android.sunshine.app.sync.SunshineSyncAdapter;
+import com.example.android.sunshine.app.util.Preferences;
 import com.example.android.sunshine.app.util.Utility;
 
 
@@ -20,8 +21,6 @@ public class MainActivity extends AppCompatActivity {
     public static final int PERMISSIONS_ALL = 1000;
     public static final int PERMISSIONS_REQUEST_GPS = 1001;
     public static final int PERMISSIONS_ACCESS_NETWORK_STATE = 1002;
-
-    private boolean mTwoPane;
     private String mLocation;
 
     @Override
@@ -29,13 +28,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Preferences.incrementTimesRun(this);
         Utility.hideStatusBar(this);
 
         // Add TODAY fragment to main
         if (savedInstanceState == null) {
             TodayFragment fragment = new TodayFragment();
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.fragment_today, fragment)
+                    .add(R.id.today_detail_container, fragment)
                     .commit();
         }
 
@@ -88,11 +88,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        String location = Utility.getPreferredLocation(this);
+        String location = Preferences.getPreferredLocation(this);
 
         // Trigger an onLocationChanged() action in the ForecastFragment if the location string is changed
         if (location != null && !location.equals(mLocation)) {
-            TodayFragment tf = (TodayFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_today);
+            TodayFragment tf = (TodayFragment) getSupportFragmentManager().findFragmentById(R.id.today_detail_container);
             if (tf != null) {
                 tf.onLocationChanged(location);
             }

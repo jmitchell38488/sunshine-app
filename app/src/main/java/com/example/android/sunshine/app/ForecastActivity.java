@@ -10,6 +10,7 @@ import android.view.MenuItem;
 
 import com.example.android.sunshine.app.fragment.DetailFragment;
 import com.example.android.sunshine.app.fragment.ForecastFragment;
+import com.example.android.sunshine.app.util.Preferences;
 import com.example.android.sunshine.app.util.Utility;
 
 
@@ -26,7 +27,7 @@ public class ForecastActivity extends AppCompatActivity implements ForecastFragm
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_forecast);
 
-        mLocation = Utility.getPreferredLocation(this);
+        mLocation = Preferences.getPreferredLocation(this);
 
         if (findViewById(R.id.weather_detail_container) != null) {
             // The detail container view will be present only in the large-screen layouts
@@ -94,7 +95,7 @@ public class ForecastActivity extends AppCompatActivity implements ForecastFragm
     @Override
     protected void onResume() {
         super.onResume();
-        String location = Utility.getPreferredLocation(this);
+        String location = Preferences.getPreferredLocation(this);
 
         // Trigger an onLocationChanged() action in the ForecastFragment if the location string is changed
         if (location != null && !location.equals(mLocation)) {
