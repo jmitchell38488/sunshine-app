@@ -1,7 +1,6 @@
 package com.example.android.sunshine.app.data.storage;
 
 import android.content.Context;
-import android.database.Cursor;
 
 import java.util.ArrayList;
 import java.util.List;
