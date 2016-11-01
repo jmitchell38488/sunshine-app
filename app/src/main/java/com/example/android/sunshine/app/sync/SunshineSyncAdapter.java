@@ -585,15 +585,15 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 context.getString(R.string.app_name), context.getString(R.string.sync_account_type));
 
         // If the password doesn't exist, the account doesn't exist
-        if ( null == accountManager.getPassword(newAccount) ) {
-
-        /*
-         * Add the account and account type, no password or user data
-         * If successful, return the Account object, otherwise report an error.
-         */
+        if (accountManager.getPassword(newAccount) == null) {
+            /*
+             * Add the account and account type, no password or user data
+             * If successful, return the Account object, otherwise report an error.
+             */
             if (!accountManager.addAccountExplicitly(newAccount, "", null)) {
                 return null;
             }
+
             /*
              * If you don't set android:syncable="true" in
              * in your <provider> element in the manifest,
@@ -602,6 +602,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
              */
             onAccountCreated(newAccount, context);
         }
+
         return newAccount;
     }
 

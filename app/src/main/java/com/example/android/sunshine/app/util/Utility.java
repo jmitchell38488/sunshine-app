@@ -1,6 +1,7 @@
 package com.example.android.sunshine.app.util;
 
 import android.Manifest;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -9,9 +10,12 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.view.View;
+import android.view.WindowManager;
 
 import com.example.android.sunshine.app.MainActivity;
 import com.example.android.sunshine.app.R;
@@ -263,6 +267,25 @@ public class Utility {
         boolean isWiFi = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
 
         return isConnected && isWiFi;
+    }
+
+    public static void hideStatusBar(Activity activity) {
+        if (Build.VERSION.SDK_INT < 16) {
+            activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        } else {
+            View decorView = activity.getWindow().getDecorView();
+            // Hide the status bar.
+            int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
+            decorView.setSystemUiVisibility(uiOptions);
+            // Remember that you should never show the action bar if the
+            // status bar is hidden, so hide that too if necessary.
+            ActionBar actionBar = activity.getActionBar();
+
+            if (actionBar != null) {
+                actionBar.hide();
+            }
+        }
     }
 
 }
