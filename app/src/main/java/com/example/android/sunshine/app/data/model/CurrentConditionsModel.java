@@ -3,12 +3,8 @@ package com.example.android.sunshine.app.data.model;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.text.format.Time;
-import android.util.Log;
 
-import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.WeatherContract;
-import com.example.android.sunshine.app.util.Utility;
 
 import java.text.SimpleDateFormat;
 

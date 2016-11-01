@@ -2,19 +2,15 @@ package com.example.android.sunshine.app.data.model;
 
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.WeatherContract;
-import com.example.android.sunshine.app.util.Utility;
+import com.example.android.sunshine.app.util.Preferences;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
 /**
  * Created by justinmitchell on 25/10/2016.
@@ -167,7 +163,7 @@ public class WeatherModel {
     }
 
     public boolean isMetric(Context context) {
-        return Utility.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
+        return Preferences.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
     }
 
     /**
