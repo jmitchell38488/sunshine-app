@@ -23,6 +23,7 @@ import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.data.model.WeatherModel;
+import com.example.android.sunshine.app.util.Preferences;
 import com.example.android.sunshine.app.util.Utility;
 import com.example.android.sunshine.app.view.DetailsViewHolder;
 
@@ -131,10 +132,10 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor> 
         long weatherId = weatherModel.getWeatherId();
         DetailsViewHolder viewHolder = (DetailsViewHolder) getView().getTag();
         Context context = getActivity();
-        boolean isMetric = Utility.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
+        boolean isMetric = Preferences.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
 
         // Do friendly formatting for sharing
-        mForecastStr = weatherModel.getFormattedString(Utility.getUnitType(context), context);
+        mForecastStr = weatherModel.getFormattedString(Preferences.getUnitType(context), context);
 
         // Set icon
         viewHolder.iconView.setImageResource(Utility.getArtResourceForWeatherCondition((int) weatherModel.getWeatherId()));

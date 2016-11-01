@@ -1,6 +1,6 @@
 package com.example.android.sunshine.app.fragment;
 
-import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -10,15 +10,20 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.data.model.LocationModel;
-import com.example.android.sunshine.app.data.model.WeatherModel;
+import com.example.android.sunshine.app.sync.SunshineSyncAdapter;
+import com.example.android.sunshine.app.util.Preferences;
 import com.example.android.sunshine.app.util.Utility;
-import com.example.android.sunshine.app.view.DetailsViewHolder;
+import com.example.android.sunshine.app.view.TodayViewHolder;
 
 /**
  * Created by justinmitchell on 1/11/2016.
@@ -27,12 +32,13 @@ import com.example.android.sunshine.app.view.DetailsViewHolder;
 public class TodayFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String LOG_TAG = TodayFragment.class.getSimpleName();
-    private static final int TODAY_LOADER = 0;
+    private static final int TODAY_LOADER = 50;
+    public static final String DETAIL_URI = "URI";
 
     private Uri mUri;
 
     public TodayFragment() {
-        setHasOptionsMenu(false);
+        // do nothing
     }
 
     @Override
@@ -40,13 +46,122 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         super.onCreate(savedInstanceState);
 
         // Add this line in order for this fragment to handle menu events.
-        setHasOptionsMenu(false);
+        setHasOptionsMenu(true);
+        Utility.hideStatusBar(getActivity());
+
+        long lastLocationId = Preferences.getLastUsedLocation(getActivity());
+        if (lastLocationId > 0) {
+            mUri = WeatherContract.CurrentConditionsEntry.buildCurrentConditionsUri(lastLocationId);
+        }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.forecastfragment, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        switch (id) {
+            case R.id.action_refresh:
+                Log.d(LOG_TAG, "Triggering action {action_refresh}");
+                updateWeather();
+                return true;
+
+            case R.id.action_map:
+                Log.d(LOG_TAG, "Triggering intent {Maps} to retrieve preferred location");
+                openPreferredLocationInMap();
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void openPreferredLocationInMap() {
+        long lastUsedLocation = Preferences.getLastUsedLocation(getActivity());
+        String mapError = getActivity().getString(R.string.pref_last_used_location_error);
+        int toastDuration = Toast.LENGTH_SHORT;
+
+        // No last used location, possibly not sync'd yet
+        if (lastUsedLocation == 0) {
+            Utility.showToast(getActivity(), mapError, toastDuration);
+            return;
+        }
+
+        // This fetches the last known location/city used
+        Uri locationUri = WeatherContract.LocationEntry.buildLocationUri(lastUsedLocation);
+        Cursor cursor = getContext().getContentResolver().query(
+                locationUri,
+                WeatherContract.LocationEntry.PROJECTION,
+                WeatherContract.LocationEntry.COLUMN_ID + " = ? ",
+                new String[] {
+                        Long.toString(lastUsedLocation)
+                },
+                null
+        );
+
+        if (cursor == null) {
+            Utility.showToast(getActivity(), mapError, toastDuration);
+            return;
+        }
+
+        cursor.moveToPosition(0);
+        LocationModel location = new LocationModel();
+        location.loadFromCursor(cursor);
+
+        Uri geoLocation = Uri.parse("geo:" + location.getCoordLat() + "," + location.getCoordLon());
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(geoLocation);
+
+        if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
+            startActivity(intent);
+        } else {
+            Log.d(LOG_TAG, "Couldn't call " + geoLocation.toString() + ", no receiving apps installed!");
+        }
+    }
+
+    private void updateWeather() {
+        SunshineSyncAdapter.syncImmediately(getActivity());
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        /*View view = inflater.inflate(R.layout.fragment_today, container, false);
+
+        ScrollView sc;
+        LinearLayout ll;
+        ListView lv;
+
+        view.setTag(new TodayViewHolder(view));
+
+        TextView timesRunView = (TextView) view.findViewById(R.id.detail_times_run);
+        TextView lastSyncView = (TextView) view.findViewById(R.id.detail_last_sync);
+
+        timesRunView.setText(
+                "Times Run: " + Utility.getTimesRun(getActivity())
+        );
+
+        String lastSyncStr = "Never run";
+        long lastSync = Utility.getLastSyncTime(getActivity());
+        if (lastSync > 0) {
+            Date date = new Date();
+            date.setTime(lastSync);
+            lastSyncStr = date.toString();
+        }
+
+        lastSyncView.setText(
+                "Last Sync: " + lastSyncStr
+        );
+
+        return view;*/
         View view = inflater.inflate(R.layout.fragment_today, container, false);
-        DetailsViewHolder viewHolder = new DetailsViewHolder(view);
+        TodayViewHolder viewHolder = new TodayViewHolder(view);
         view.setTag(viewHolder);
 
         return view;
@@ -56,6 +171,35 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
     public void onActivityCreated(Bundle savedInstanceState) {
         getLoaderManager().initLoader(TODAY_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        if (mUri == null) {
+            return null;
+        }
+
+        // Now create and return a CursorLoader that will take care of
+        // creating a Cursor for the data being displayed.
+        return new CursorLoader(
+                getActivity(),
+                mUri,
+                WeatherContract.CurrentConditionsEntry.FORECAST_COLUMNS,
+                null,
+                null,
+                null
+        );
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        Log.v(LOG_TAG, "In onLoadFinished");
+
+        if (!cursor.moveToFirst()) {
+            return;
+        }
+
+        onWeatherRefresh(cursor);
     }
 
     public void onLocationChanged(String newLocation) {
@@ -71,84 +215,16 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         getLoaderManager().restartLoader(TODAY_LOADER, null, this);
     }
 
+    public void onWeatherRefresh(Cursor cursor) {
+        Log.v(LOG_TAG, "Reloading TODAY Weather");
+
+        TodayViewHolder viewHolder = (TodayViewHolder) getView().getTag();
+        viewHolder.reloadProperties(cursor, getActivity());
+    }
+
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-
-    }
-
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        if (mUri == null) {
-            return null;
-        }
-
-        // Now create and return a CursorLoader that will take care of
-        // creating a Cursor for the data being displayed.
-        return new CursorLoader(
-                getActivity(),
-                mUri,
-                WeatherContract.FORECAST_COLUMNS,
-                null,
-                null,
-                null
-        );
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        Log.v(LOG_TAG, "In onLoadFinished");
-
-        if (!cursor.moveToFirst()) {
-            return;
-        }
-
-        WeatherModel weatherModel = new WeatherModel();
-        weatherModel.loadFromCursor(cursor);
-
-        LocationModel locationModel = new LocationModel();
-        locationModel.loadFromCursor(cursor);
-
-
-        DetailsViewHolder viewHolder = (DetailsViewHolder) getView().getTag();
-        Context context = getActivity();
-
-        long weatherId = weatherModel.getWeatherId();
-        boolean isMetric = Utility.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
-
-        // Set icon
-        viewHolder.iconView.setImageResource(Utility.getArtResourceForWeatherCondition((int) weatherModel.getWeatherId()));
-
-        // Set accessibility property
-        viewHolder.iconView.setContentDescription(weatherModel.getDescription());
-
-        // Set day
-        viewHolder.dayView.setText(weatherModel.getDayName(context));
-
-        // Set date
-        viewHolder.dateView.setText(weatherModel.getFormattedMonthDay(context));
-
-        // Set description
-        viewHolder.descriptionView.setText(weatherModel.getDescription());
-
-        // Set temperature high
-        viewHolder.highTempView.setText(weatherModel.getFormattedMaxTemperature(context, isMetric));
-
-        // Set temperature low
-        viewHolder.lowTempView.setText(weatherModel.getFormattedMinTemperature(context, isMetric));
-
-        // Set humidity
-        viewHolder.humidityView.setText(weatherModel.getFormattedHumidity(context));
-
-        // Set pressure
-        viewHolder.pressureView.setText(weatherModel.getFormattedPressure(context));
-
-        // Set wind details
-        viewHolder.windView.setText(weatherModel.getFormattedWindDetails(context));
-
-        // Set location
-        if (viewHolder.locationView != null) {
-            viewHolder.locationView.setText(locationModel.getCityName());
-        }
+        // do nothing
     }
 
 }

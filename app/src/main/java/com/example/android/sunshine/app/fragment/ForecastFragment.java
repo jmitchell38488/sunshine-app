@@ -23,8 +23,9 @@ import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.sync.SunshineSyncAdapter;
+import com.example.android.sunshine.app.util.Preferences;
 import com.example.android.sunshine.app.util.Utility;
-import com.example.android.sunshine.app.sync.ForecastAdapter;
+import com.example.android.sunshine.app.sync.adapter.ForecastAdapter;
 
 /**
  * Created by justinmitchell on 25/10/2016.
@@ -134,7 +135,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 // if it cannot seek to that position.
                 Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
                 if (cursor != null) {
-                    String locationSetting = Utility.getPreferredLocation(getActivity());
+                    String locationSetting = Preferences.getPreferredLocation(getActivity());
                     ((Callback) getActivity()).onItemSelected(
                             WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
                                     locationSetting, cursor.getLong(WeatherContract.COL_WEATHER_DATE)
@@ -177,7 +178,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         // To only show current and future dates, filter the query to return weather only for
         // dates after or including today.
 
-        String locationSetting = Utility.getPreferredLocation(getActivity());
+        String locationSetting = Preferences.getPreferredLocation(getActivity());
 
         // Sort order:  Ascending, by date.
         String sortOrder = WeatherContract.WeatherEntry.TABLE_NAME + "."
