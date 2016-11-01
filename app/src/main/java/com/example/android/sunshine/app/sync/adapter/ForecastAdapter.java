@@ -1,4 +1,4 @@
-package com.example.android.sunshine.app.sync;
+package com.example.android.sunshine.app.sync.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -13,6 +13,7 @@ import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.data.model.CurrentConditionsModel;
 import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.data.model.WeatherModel;
+import com.example.android.sunshine.app.util.Preferences;
 import com.example.android.sunshine.app.util.Utility;
 import com.example.android.sunshine.app.view.ListItemViewHolder;
 
@@ -74,7 +75,7 @@ public class ForecastAdapter extends CursorAdapter {
         CurrentConditionsModel currentModel = null;
 
         ListItemViewHolder listItemViewHolder = (ListItemViewHolder) view.getTag();
-        boolean isMetric = Utility.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
+        boolean isMetric = Preferences.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
         int viewType = getItemViewType(cursor.getPosition());
 
         // We only want to do this on "TODAY"
