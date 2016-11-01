@@ -4,18 +4,17 @@ import android.Manifest;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
-import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.example.android.sunshine.app.MainActivity;
 import com.example.android.sunshine.app.R;
@@ -28,22 +27,9 @@ public class Utility {
 
     private static final String LOG_TAG = Utility.class.getSimpleName();
 
-    public static String getSyncFrequency(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        return prefs.getString(context.getString(R.string.pref_sync_frequency_key),
-                context.getString(R.string.pref_sync_frequency_default));
-    }
-
-    public static String getPreferredLocation(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        return prefs.getString(context.getString(R.string.pref_location_key),
-                context.getString(R.string.pref_location_default));
-    }
-
-    public static String getUnitType(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        return prefs.getString(context.getString(R.string.pref_units_key),
-                context.getString(R.string.pref_units_metric));
+    public static void showToast(Activity activity, String message, int duration) {
+        Toast toast = Toast.makeText(activity, message, duration);
+        toast.show();
     }
 
     /**
@@ -116,25 +102,7 @@ public class Utility {
         return -1;
     }
 
-    public static boolean userDisplayNotifications(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String displayNotificationsKey = context.getString(R.string.pref_enable_notifications_key);
 
-        boolean displayNotifications = prefs.getBoolean(displayNotificationsKey,
-                Boolean.parseBoolean(context.getString(R.string.pref_enable_notifications_default)));
-
-        return displayNotifications == true;
-    }
-
-    public static boolean usePreferredLocation(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String usePreferredKey = context.getString(R.string.pref_enable_gps_location_key);
-
-        boolean usePreferred = prefs.getBoolean(usePreferredKey,
-                Boolean.parseBoolean(context.getString(R.string.pref_enable_gps_location_default)));
-
-        return !usePreferred;
-    }
 
     /**
      * Method to fetch the best last location from either the GPS or Network Provider
