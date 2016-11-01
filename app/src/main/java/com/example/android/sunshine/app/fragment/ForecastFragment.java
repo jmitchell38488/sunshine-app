@@ -135,9 +135,12 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
                 if (cursor != null) {
                     String locationSetting = Utility.getPreferredLocation(getActivity());
+                    long lastUsedLocation = Utility.getLastUsedLocation(getActivity());
+
                     ((Callback) getActivity()).onItemSelected(
-                            WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
-                                    locationSetting, cursor.getLong(WeatherContract.COL_WEATHER_DATE)
+                            WeatherContract.WeatherEntry.buildWeatherLocationIdWithDate(
+                                    lastUsedLocation,
+                                    cursor.getLong(WeatherContract.COL_WEATHER_DATE)
                             )
                     );
                 }
@@ -179,11 +182,16 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
         String locationSetting = Utility.getPreferredLocation(getActivity());
 
+
+
         // Sort order:  Ascending, by date.
         String sortOrder = WeatherContract.WeatherEntry.TABLE_NAME + "."
                 + WeatherContract.WeatherEntry.COLUMN_DATE + " ASC";
+
         Uri weatherForLocationUri = WeatherContract.WeatherEntry.buildWeatherLocationWithStartDate(
-                locationSetting, System.currentTimeMillis());
+                locationSetting,
+                System.currentTimeMillis()
+        );
 
         return new CursorLoader(
                 getActivity(),

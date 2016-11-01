@@ -24,6 +24,7 @@ public class WeatherProvider extends ContentProvider {
     static final int WEATHER = 100;
     static final int WEATHER_WITH_LOCATION = 101;
     static final int WEATHER_WITH_LOCATION_AND_DATE = 102;
+    static final int WEATHER_WITH_LOCATIONID_AND_DATE = 103;
     static final int LOCATION = 300;
     static final int CURRENT_CONDITIONS = 400;
     static final int CURRENT_WITH_ID = 401;
@@ -46,6 +47,12 @@ public class WeatherProvider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         Cursor retCursor;
         switch (sUriMatcher.match(uri)) {
+
+            // "weather/#/#"
+            case WEATHER_WITH_LOCATIONID_AND_DATE: {
+                retCursor = weatherStorage.getWeatherByLocationIdAndDate(uri, projection, sortOrder);
+                break;
+            }
 
             // "weather/*/*"
             case WEATHER_WITH_LOCATION_AND_DATE: {
@@ -254,6 +261,8 @@ public class WeatherProvider extends ContentProvider {
         switch (match) {
             case WEATHER_WITH_LOCATION_AND_DATE:
                 return WeatherContract.WeatherEntry.CONTENT_ITEM_TYPE;
+            case WEATHER_WITH_LOCATIONID_AND_DATE:
+                return WeatherContract.WeatherEntry.CONTENT_ITEM_TYPE;
             case WEATHER_WITH_LOCATION:
                 return WeatherContract.WeatherEntry.CONTENT_TYPE;
             case WEATHER:
@@ -285,9 +294,10 @@ public class WeatherProvider extends ContentProvider {
         final String authority = WeatherContract.CONTENT_AUTHORITY;
 
         // For each type of URI you want to add, create a corresponding code.
+        matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/#/#", WEATHER_WITH_LOCATIONID_AND_DATE);
         matcher.addURI(authority, WeatherContract.PATH_WEATHER, WEATHER);
-        matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*", WEATHER_WITH_LOCATION);
         matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*/#", WEATHER_WITH_LOCATION_AND_DATE);
+        matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*", WEATHER_WITH_LOCATION);
 
         matcher.addURI(authority, WeatherContract.PATH_LOCATION, LOCATION);
 

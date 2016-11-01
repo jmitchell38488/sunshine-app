@@ -57,10 +57,15 @@ public class WeatherSqlite implements IStorage {
             WeatherContract.WeatherEntry.TABLE_NAME +
                     "." + WeatherContract.WeatherEntry.COLUMN_DATE + " >= ? ";
 
-
     private static final String sLocationSettingAndDaySelection =
             WeatherContract.LocationEntry.TABLE_NAME +
                     "." + WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
+            WeatherContract.WeatherEntry.TABLE_NAME +
+                    "." + WeatherContract.WeatherEntry.COLUMN_DATE + " = ? ";
+
+    private static final String sLocationIdAndDaySelection =
+            WeatherContract.WeatherEntry.TABLE_NAME +
+                    "." + WeatherContract.WeatherEntry.COLUMN_LOC_KEY + " = ? AND " +
             WeatherContract.WeatherEntry.TABLE_NAME +
                     "." + WeatherContract.WeatherEntry.COLUMN_DATE + " = ? ";
 
@@ -226,6 +231,21 @@ public class WeatherSqlite implements IStorage {
                 projection,
                 sLocationSettingAndDaySelection,
                 new String[]{locationSetting, Long.toString(date)},
+                null,
+                null,
+                sortOrder
+        );
+    }
+
+    @Override
+    public Cursor getWeatherByLocationIdAndDate(Uri uri, String[] projection, String sortOrder) {
+        long locationId = WeatherContract.WeatherEntry.getLocationIdFromUri(uri);
+        long date = WeatherContract.WeatherEntry.getDateFromUri(uri);
+
+        return this.query(
+                projection,
+                sLocationIdAndDaySelection,
+                new String[]{Long.toString(locationId), Long.toString(date)},
                 null,
                 null,
                 sortOrder

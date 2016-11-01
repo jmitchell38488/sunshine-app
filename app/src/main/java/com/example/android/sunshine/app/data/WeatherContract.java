@@ -220,16 +220,34 @@ public class WeatherContract {
             return CONTENT_URI.buildUpon().appendPath(locationSetting).build();
         }
 
-        public static Uri buildWeatherLocationWithStartDate(
-                String locationSetting, long startDate) {
+        public static Uri buildWeatherLocationWithStartDate(String locationSetting, long startDate) {
             long normalizedDate = normalizeDate(startDate);
-            return CONTENT_URI.buildUpon().appendPath(locationSetting)
-                    .appendQueryParameter(COLUMN_DATE, Long.toString(normalizedDate)).build();
+            return CONTENT_URI.buildUpon()
+                    .appendPath(locationSetting)
+                    .appendQueryParameter(COLUMN_DATE, Long.toString(normalizedDate))
+                    .build();
+        }
+
+        public static Uri buildWeatherLocationIdWithStartDate(long locationId, long startDate) {
+            long normalizedDate = normalizeDate(startDate);
+            return CONTENT_URI.buildUpon()
+                    .appendPath(Long.toString(locationId))
+                    .appendQueryParameter(COLUMN_DATE, Long.toString(normalizedDate))
+                    .build();
         }
 
         public static Uri buildWeatherLocationWithDate(String locationSetting, long date) {
-            return CONTENT_URI.buildUpon().appendPath(locationSetting)
-                    .appendPath(Long.toString(normalizeDate(date))).build();
+            return CONTENT_URI.buildUpon()
+                    .appendPath(locationSetting)
+                    .appendPath(Long.toString(normalizeDate(date)))
+                    .build();
+        }
+
+        public static Uri buildWeatherLocationIdWithDate(long locationId, long date) {
+            return CONTENT_URI.buildUpon()
+                    .appendPath(Long.toString(locationId))
+                    .appendPath(Long.toString(normalizeDate(date)))
+                    .build();
         }
 
         public static String getLocationSettingFromUri(Uri uri) {
@@ -238,6 +256,10 @@ public class WeatherContract {
 
         public static long getDateFromUri(Uri uri) {
             return Long.parseLong(uri.getPathSegments().get(2));
+        }
+
+        public static long getLocationIdFromUri(Uri uri) {
+            return Long.parseLong(uri.getPathSegments().get(1));
         }
 
         public static long getStartDateFromUri(Uri uri) {

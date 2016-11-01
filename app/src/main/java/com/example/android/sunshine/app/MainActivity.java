@@ -1,17 +1,15 @@
 package com.example.android.sunshine.app;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.example.android.sunshine.app.data.WeatherDbHelper;
 import com.example.android.sunshine.app.fragment.DetailFragment;
 import com.example.android.sunshine.app.fragment.ForecastFragment;
 import com.example.android.sunshine.app.sync.SunshineSyncAdapter;
@@ -59,6 +57,12 @@ public class MainActivity extends AppCompatActivity  implements ForecastFragment
         forecastFragment.setUseTodayLayout(!mTwoPane);
 
         Utility.checkRequiredPermissions(this);
+
+        // First time being run?
+        if (Utility.getTimesRun(this) == 0) {
+            WeatherDbHelper dbHelper = new WeatherDbHelper(this);
+            dbHelper.getWritableDatabase();
+        }
 
         SunshineSyncAdapter.initializeSyncAdapter(this);
     }

@@ -16,6 +16,8 @@ public interface IStorage {
 
     public Cursor getWeatherByLocationSettingAndDate(Uri uri, String[] projection, String sortOrder);
 
+    public Cursor getWeatherByLocationIdAndDate(Uri uri, String[] projection, String sortOrder);
+
     public Cursor getWeather(String[] projection, String selection, String[] selectionArgs, String sortOrder);
 
     public Cursor getLocation(String[] projection, String selection, String[] selectionArgs, String sortOrder);

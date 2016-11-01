@@ -24,6 +24,14 @@ public class Utility {
 
     private static final String LOG_TAG = Utility.class.getSimpleName();
 
+    public static int getTimesRun(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        String timesRun = prefs.getString(context.getString(R.string.pref_times_run_key),
+                context.getString(R.string.pref_times_run_default));
+
+        return Integer.parseInt(timesRun);
+    }
+
     public static String getSyncFrequency(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         return prefs.getString(context.getString(R.string.pref_sync_frequency_key),
@@ -34,6 +42,14 @@ public class Utility {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         return prefs.getString(context.getString(R.string.pref_location_key),
                 context.getString(R.string.pref_location_default));
+    }
+
+    public static long getLastUsedLocation(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        String locationId = prefs.getString(context.getString(R.string.pref_location_last_used_status_key),
+                context.getString(R.string.pref_location_last_used_status_default));
+
+        return Long.parseLong(locationId);
     }
 
     public static String getUnitType(Context context) {

@@ -20,6 +20,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.IntDef;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.text.format.Time;
@@ -41,6 +42,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -59,10 +62,16 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     private final String API_KEY = "APPID";
 
     public static final double SYNC_FLEXTIME = 0.333;
-
-    // Set notifications to update every 6 hours
-    //private static final long WEATHER_NOTIFICATION_DELAY = 1000 * 60 * 60 * 6;
     private static final int WEATHER_NOTIFICATION_ID = 3004;
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({LOCATION_STATUS_OK,LOCATION_STATUS_SERVER_DOWN,LOCATION_STATUS_SERVER_INVALID,LOCATION_STATUS_UNKNOWN})
+    public @interface LocationStatus {}
+
+    public static final int LOCATION_STATUS_OK = 0;
+    public static final int LOCATION_STATUS_SERVER_DOWN = 1;
+    public static final int LOCATION_STATUS_SERVER_INVALID = 2;
+    public static final int LOCATION_STATUS_UNKNOWN = 3;
 
     public SunshineSyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
@@ -72,10 +81,18 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(LOG_TAG, "onPerformSync");
         long locationId = syncForecastData();
+
+        // Store the location id in the SharedPreferences for later use
+        SharedPreferences prefs = getContext().getSharedPreferences("com.example.android.sunshine.app", Context.MODE_PRIVATE);
+        prefs.edit().putLong(
+                getContext().getString(R.string.pref_location_last_used_status_key),
+                locationId
+        ).apply();
+
         syncCurrentData(locationId);
 
         Log.d(LOG_TAG, "Triggering notifyWeather");
-        notifyWeather();
+        notifyWeather(locationId);
     }
 
     private long syncForecastData() {
@@ -98,8 +115,9 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             WeatherDataParser weatherParser = new WeatherDataParser(forecastJsonStr);
 
             // Convert the records to objects
+            String locationSetting = Utility.usePreferredLocation(getContext()) ? params[0] : "";
             WeatherModel[] weatherItems = weatherParser.convertWeatherData();
-            LocationModel locationItem = weatherParser.convertLocationData(params[0]);
+            LocationModel locationItem = weatherParser.convertLocationData(locationSetting);
 
             // Save location to data store
             locationId = addLocation(locationItem);
@@ -195,7 +213,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 });
     }
 
-    private void notifyWeather() {
+    private void notifyWeather(long locationId) {
         Context context = getContext();
         //checking the last update and notify if it' the first of the day
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -215,19 +233,18 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             return;
         }
 
-        // Last sync was more than 1 day ago, let's send a notification with the weather.
-        String locationQuery = Utility.getPreferredLocation(context);
-
-        Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
+        Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationIdWithDate(locationId, System.currentTimeMillis());
 
         // we'll query our contentProvider, as always
         Cursor cursor = context.getContentResolver().query(weatherUri, WeatherContract.FORECAST_COLUMNS, null, null, null);
 
         if (cursor.moveToFirst()) {
             WeatherModel weatherModel = new WeatherModel();
+            LocationModel locationModel = new LocationModel();
             CurrentConditionsModel currentModel = null;
 
             weatherModel.loadFromCursor(cursor);
+            locationModel.loadFromCursor(cursor);
 
             Uri currentUri = WeatherContract.CurrentConditionsEntry.buildCurrentConditionsUri(weatherModel.getLocationId());
             Cursor conditionsCursor = context.getContentResolver().query(
@@ -259,6 +276,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             } else {
                 contentText = String.format(
                         context.getString(R.string.format_notification_current),
+                        locationModel.getCityName(),
                         currentModel.getFormattedCurrentTemperature(context, currentModel.isMetric(context)),
                         currentModel.getDescription(),
                         weatherModel.getDescription(),
@@ -649,4 +667,5 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     public static void initializeSyncAdapter(Context context) {
         getSyncAccount(context);
     }
+
 }
