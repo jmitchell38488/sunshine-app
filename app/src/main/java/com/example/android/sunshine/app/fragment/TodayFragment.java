@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -19,6 +20,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.android.sunshine.app.R;
@@ -58,6 +60,11 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         if (lastLocationId > 0) {
             mUri = WeatherContract.WeatherEntry.buildWeatherLocationIdToday(lastLocationId);
             Log.d(LOG_TAG, mUri.toString());
+
+            long todayDateTime = Preferences.getTodayDateTime(getActivity());
+            if (todayDateTime == 0) {
+                Preferences.setTodayDateTime(getActivity(), Utility.getMidnightTimeToday());
+            }
         }
     }
 
@@ -157,6 +164,8 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
             return null;
         }
 
+        long datetime = Utility.getMidnightTimeToday();
+
         // Now create and return a CursorLoader that will take care of
         // creating a Cursor for the data being displayed.
         return new CursorLoader(
@@ -204,11 +213,25 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
 
         TodayViewHolder viewHolder = (TodayViewHolder) getView().getTag();
         viewHolder.reloadProperties(cursor, getActivity());
+
+        Location location = Utility.getLastBestLocation(getActivity());
+        if (location != null) {
+            TextView coords = (TextView) getView().findViewById(R.id.today_gps_coords);
+            String s = "lat (" + location.getLatitude() + ") lon (" + location.getLongitude() + ")";
+            coords.setText(s);
+        }
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        // do nothing
+        loader = new CursorLoader(
+                getActivity(),
+                mUri,
+                WeatherContract.FORECAST_COLUMNS,
+                null,
+                null,
+                null
+        );
     }
 
     @Override
@@ -216,12 +239,20 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         super.onStart();
 
         // Time ticker per minute: http://stackoverflow.com/a/13059819/1740059
+        // This is a foreground only receiver
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (intent.getAction().compareTo(Intent.ACTION_TIME_TICK) == 0) {
                     TodayViewHolder viewHolder = (TodayViewHolder) getView().getTag();
                     viewHolder.redrawDateTime();
+
+                    Location location = Utility.getLastBestLocation(getActivity());
+                    if (location != null) {
+                        TextView coords = (TextView) getView().findViewById(R.id.today_gps_coords);
+                        String s = "lat (" + location.getLatitude() + ") lon (" + location.getLongitude() + ")";
+                        coords.setText(s);
+                    }
                 }
             }
         };
@@ -239,6 +270,14 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
 
                 // Peform update
                 updateWeather();
+
+                // Update coords
+                Location location = Utility.getLastBestLocation(getActivity());
+                if (location != null) {
+                    TextView coords = (TextView) getView().findViewById(R.id.today_gps_coords);
+                    String s = "lat (" + location.getLatitude() + ") lon (" + location.getLongitude() + ")";
+                    coords.setText(s);
+                }
 
                 // Signal SwipeRefreshLayout to stop the progress indicator
                 mSwipeRefresh.setRefreshing(false);

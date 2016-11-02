@@ -109,4 +109,19 @@ public class Preferences {
         spe.commit();
     }
 
+    public static long getTodayDateTime(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(SP_COUNT, Context.MODE_PRIVATE);
+        long def = Long.parseLong(context.getString(R.string.pref_today_datetime_default));
+        long dateTime = prefs.getLong(context.getString(R.string.pref_today_datetime_key), def);
+
+        return dateTime;
+    }
+
+    public static void setTodayDateTime(Context context, long dateTime) {
+        SharedPreferences prefs = context.getSharedPreferences(SP_COUNT, Context.MODE_PRIVATE);
+        SharedPreferences.Editor spe = prefs.edit();
+        spe.putLong(context.getString(R.string.pref_today_datetime_key), dateTime);
+        spe.commit();
+    }
+
 }

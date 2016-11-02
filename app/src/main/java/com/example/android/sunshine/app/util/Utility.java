@@ -19,7 +19,10 @@ import android.widget.Toast;
 import com.example.android.sunshine.app.MainActivity;
 import com.example.android.sunshine.app.R;
 
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 /**
  * Created by justinmitchell on 29/10/2016.
@@ -261,14 +264,23 @@ public class Utility {
     /**
      * Helper method to return the midnight time for today. This is used to compare to the UTC
      * stored dates for the weather forecasts.
+     * http://stackoverflow.com/a/6850919/1740059
      *
      * @return the unix timestamp in milliseconds for today at midnight
      */
     public static long getMidnightTimeToday() {
-        long time = new Date().getTime();
-        Date date = new Date(time - time % (24 * 60 * 60 * 1000));
+        Calendar date = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
 
-        return date.getTime();
+        // reset hour, minutes, seconds and millis
+        date.set(Calendar.HOUR_OF_DAY, 0);
+        date.set(Calendar.MINUTE, 0);
+        date.set(Calendar.SECOND, 0);
+        date.set(Calendar.MILLISECOND, 0);
+
+        // next day
+        date.add(Calendar.DAY_OF_MONTH, 1);
+
+        return date.getTimeInMillis();
     }
 
     public static double getConvertedTemperature(double temperature, boolean isMetric) {

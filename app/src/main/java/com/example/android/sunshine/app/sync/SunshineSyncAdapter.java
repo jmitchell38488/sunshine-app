@@ -37,11 +37,7 @@ import com.example.android.sunshine.app.util.WeatherDataParser;
 
 import org.json.JSONException;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -220,9 +216,11 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         }
 
         WeatherModel weatherModel = new WeatherModel();
+        LocationModel locationModel = new LocationModel();
         CurrentConditionsModel currentModel = null;
 
         weatherModel.loadFromCursor(cursor);
+        locationModel.loadFromCursor(cursor);
 
         Uri currentUri = WeatherContract.CurrentConditionsEntry.buildCurrentConditionsUri(weatherModel.getLocationId());
         Cursor conditionsCursor = getContext().getContentResolver().query(
@@ -244,32 +242,40 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         String title = getContext().getString(R.string.app_name);
 
         // Define the text of the forecast.
-        String contentText = "";
-        if (currentModel == null) {
-            contentText = String.format(
-                    getContext().getString(R.string.format_notification),
-                    weatherModel.getDescription(),
-                    weatherModel.getFormattedMaxTemperature(getContext(), weatherModel.isMetric(getContext())),
-                    weatherModel.getFormattedMinTemperature(getContext(), weatherModel.isMetric(getContext())));
-        } else {
-            contentText = String.format(
-                    getContext().getString(R.string.format_notification_current),
-                    currentModel.getFormattedCurrentTemperature(getContext(), currentModel.isMetric(getContext())),
-                    currentModel.getDescription(),
-                    weatherModel.getDescription(),
-                    weatherModel.getFormattedMaxTemperature(getContext(), weatherModel.isMetric(getContext())),
-                    weatherModel.getFormattedMinTemperature(getContext(), weatherModel.isMetric(getContext())));
-        }
+        String forecastText = "";
+        String currentText = "";
 
-        Log.d(LOG_TAG, "Notification (" + contentText + ")");
+        forecastText = String.format(
+                getContext().getString(R.string.format_notification),
+                Utility.capitalize(weatherModel.getDescription()),
+                weatherModel.getFormattedMaxTemperature(getContext(), weatherModel.isMetric(getContext())),
+                weatherModel.getFormattedMinTemperature(getContext(), weatherModel.isMetric(getContext())));
+
+        if (currentModel != null) {
+            currentText = String.format(
+                    getContext().getString(R.string.format_notification_current),
+                    locationModel.getCityName(),
+                    currentModel.getFormattedCurrentTemperature(getContext(), currentModel.isMetric(getContext())),
+                    Utility.capitalize(currentModel.getDescription()));
+        }
 
         // NotificationCompatBuilder is a very convenient way to build backward-compatible
         // notifications.  Just throw in some data.
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(getContext())
                         .setSmallIcon(iconId)
-                        .setContentTitle(title)
-                        .setContentText(contentText);
+                        .setContentTitle(title);
+
+        if (currentModel == null) {
+            mBuilder.setContentText(forecastText);
+        } else {
+            mBuilder.setContentText(currentText)
+                    .setStyle(
+                            new NotificationCompat.BigTextStyle().bigText(currentText + "\n" + forecastText)
+                    );
+
+        }
+
 
         // Make something interesting happen when the user clicks on the notification.
         // In this case, opening the app is sufficient.
@@ -288,7 +294,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
 
         // Set auto cancel
-        mBuilder.getNotification().flags |= Notification.FLAG_AUTO_CANCEL;
+        mBuilder.getNotification().flags = Notification.DEFAULT_LIGHTS | Notification.FLAG_AUTO_CANCEL;
 
         // WEATHER_NOTIFICATION_ID allows you to update the notification later on.
         mNotificationManager.notify(WEATHER_NOTIFICATION_ID, mBuilder.build());
