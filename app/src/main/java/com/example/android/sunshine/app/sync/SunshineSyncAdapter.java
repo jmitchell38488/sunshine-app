@@ -32,6 +32,7 @@ import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.data.model.WeatherModel;
 import com.example.android.sunshine.app.util.Preferences;
 import com.example.android.sunshine.app.util.Utility;
+import com.example.android.sunshine.app.util.WeatherDataFetcher;
 import com.example.android.sunshine.app.util.WeatherDataParser;
 
 import org.json.JSONException;
@@ -63,8 +64,11 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     //private static final long WEATHER_NOTIFICATION_DELAY = 1000 * 60 * 60 * 6;
     private static final int WEATHER_NOTIFICATION_ID = 3004;
 
+    private final WeatherDataFetcher weatherDataFetcher;
+
     public SunshineSyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
+        weatherDataFetcher = new WeatherDataFetcher();
     }
 
     @Override
@@ -328,7 +332,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
             url = new URL(uriBuilder.toString());
 
-            jsonStr = fetchJsonFromUrl(url);
+            jsonStr = weatherDataFetcher.fetchJsonFromUrl(url);
         } catch (MalformedURLException e) {
             Log.e(LOG_TAG, "Could not fetch JSON from URL", e);
         }
@@ -370,7 +374,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
             url = new URL(uriBuilder.toString());
 
-            jsonStr = fetchJsonFromUrl(url);
+            jsonStr = weatherDataFetcher.fetchJsonFromUrl(url);
         } catch (MalformedURLException e) {
             Log.e(LOG_TAG, "Could not fetch JSON from URL", e);
         }
@@ -378,70 +382,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         return jsonStr;
     }
 
-    private String fetchJsonFromUrl(URL url) {
-        // These two need to be declared outside the try/catch
-        // so that they can be closed in the finally block.
-        HttpURLConnection urlConnection = null;
-        BufferedReader reader = null;
 
-        // Will contain the raw JSON response as a string.
-        String jsonPackage = null;
-
-        try {
-            // Create the request to OpenWeatherMap, and open the connection
-            urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setRequestMethod("GET");
-            urlConnection.connect();
-
-            // Read the input stream into a String
-            InputStream inputStream = urlConnection.getInputStream();
-            StringBuffer buffer = new StringBuffer();
-            if (inputStream == null) {
-                // Nothing to do.
-                jsonPackage = null;
-            }
-
-            reader = new BufferedReader(new InputStreamReader(inputStream));
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                // But it does make debugging a *lot* easier if you print out the completed
-                // buffer for debugging.
-                buffer.append(line + "\n");
-            }
-
-            // Stream was empty.  No point in parsing.
-            if (buffer.length() == 0) {
-                return null;
-            }
-
-            jsonPackage = buffer.toString();
-
-            Log.d(LOG_TAG, "JSON Output: " + jsonPackage);
-        } catch (SecurityException e) {
-            Log.e(LOG_TAG, "Error: " + e.getMessage(), e);
-            jsonPackage = null;
-        } catch (IOException e) {
-            Log.e(LOG_TAG, "Error: " + e.getMessage(), e);
-            // If the code didn't successfully get the weather data, there's no point in attempting
-            // to parse it.
-            jsonPackage = null;
-        } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (final IOException e) {
-                    Log.e(LOG_TAG, "Error closing stream", e);
-                }
-            }
-        }
-
-        return jsonPackage;
-    }
 
     public long addLocation(LocationModel locationModel) {
         long locationId =  this.addLocation(
@@ -610,7 +551,6 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                     authority, new Bundle(), syncInterval);
         }
     }
-
 
     private static void onAccountCreated(Account newAccount, Context context) {
         // Get the sync interval in hours, make sure to multiply by seconds (3600: 1 hour)

@@ -40,7 +40,7 @@ public class WeatherDataParser {
         final String OWM_WEATHER = "weather";
         final String OWM_TEMPERATURE = "temp";
         final String OWM_WEATHER_ID = "id";
-        final String OWM_WEATHER_DESC = "main";
+        final String OWM_WEATHER_DESC = "description";
         final String OWM_TEMP_MIN = "min";
         final String OWM_TEMP_MAX = "max";
         final String OWM_PRESSURE = "pressure";
@@ -125,7 +125,7 @@ public class WeatherDataParser {
         final String OWM_WIND = "wind";
         final String OWM_TEMPERATURE = "temp";
         final String OWM_WEATHER_ID = "id";
-        final String OWM_WEATHER_DESC = "main";
+        final String OWM_WEATHER_DESC = "description";
         final String OWM_TEMP_MIN = "temp_min";
         final String OWM_TEMP_MAX = "temp_max";
         final String OWM_PRESSURE = "pressure";

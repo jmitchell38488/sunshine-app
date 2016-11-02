@@ -17,6 +17,7 @@ import com.example.android.sunshine.app.util.Preferences;
 import com.example.android.sunshine.app.util.Utility;
 
 import java.text.SimpleDateFormat;
+import java.util.StringTokenizer;
 
 /**
  * Created by justinmitchell on 30/10/2016.
@@ -104,7 +105,7 @@ public class TodayViewHolder {
             highLowView.setText(weatherModel.getFormattedMinTemperature(context, isMetric));
         }
 
-        weatherView.setText(currentModel.getDescription());
+        weatherView.setText(Utility.capitalize(currentModel.getDescription()));
         humidityView.setText(context.getString(R.string.format_humidity_today, currentModel.getHumidity()));
         pressureView.setText(context.getString(R.string.format_pressure_today, currentModel.getHumidity()));
 
