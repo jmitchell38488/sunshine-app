@@ -3,6 +3,7 @@ package com.example.android.sunshine.app.view;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -15,36 +16,40 @@ import com.example.android.sunshine.app.data.model.WeatherModel;
 import com.example.android.sunshine.app.util.Preferences;
 import com.example.android.sunshine.app.util.Utility;
 
+import java.text.SimpleDateFormat;
+
 /**
  * Created by justinmitchell on 30/10/2016.
  */
 
 public class TodayViewHolder {
 
-    public final ImageView iconView;
-    public final TextView dayView;
+    private static String LOG_TAG = TodayViewHolder.class.getSimpleName();
+
+    public final TextView syncView;
+    public final TextView locationView;
     public final TextView dateView;
-    public final TextView descriptionView;
-    public final TextView highTempView;
-    public final TextView lowTempView;
+    public final ImageView iconView;
+    public final TextView currentView;
+    public final TextView highLowView;
+    public final TextView weatherView;
     public final TextView humidityView;
     public final TextView pressureView;
     public final TextView windView;
-    public final TextView locationView;
 
     public TodayViewHolder(View view) {
-        iconView = (ImageView) view.findViewById(R.id.detail_icon);
-        dayView = (TextView) view.findViewById(R.id.detail_day_textview);
-        dateView = (TextView) view.findViewById(R.id.detail_date_textview);
-        descriptionView = (TextView) view.findViewById(R.id.detail_forecast_textview);
-        highTempView = (TextView) view.findViewById(R.id.detail_high_textview);
-        lowTempView = (TextView) view.findViewById(R.id.detail_low_textview);
-        humidityView = (TextView) view.findViewById(R.id.detail_humidity_textview);
-        pressureView = (TextView) view.findViewById(R.id.detail_pressure_textview);
-        windView = (TextView) view.findViewById(R.id.detail_wind_textview);
+        syncView = (TextView) view.findViewById(R.id.today_last_sync);
+        dateView = (TextView) view.findViewById(R.id.today_date_textview);
+        iconView = (ImageView) view.findViewById(R.id.today_icon);
+        currentView = (TextView) view.findViewById(R.id.today_current_textview);
+        highLowView = (TextView) view.findViewById(R.id.today_high_low_textview);
+        weatherView = (TextView) view.findViewById(R.id.today_weather_textview);
+        humidityView = (TextView) view.findViewById(R.id.today_humidity_value_textview);
+        pressureView = (TextView) view.findViewById(R.id.today_pressure_value_textview);
+        windView = (TextView) view.findViewById(R.id.today_wind_value_textview);
 
-        if (view.findViewById(R.id.detail_location_textview) != null) {
-            locationView = (TextView) view.findViewById(R.id.detail_location_textview);
+        if (view.findViewById(R.id.today_location_textview) != null) {
+            locationView = (TextView) view.findViewById(R.id.today_location_textview);
         } else {
             locationView = null;
         }
@@ -61,51 +66,79 @@ public class TodayViewHolder {
         LocationModel locationModel = new LocationModel();
         locationModel.loadFromCursor(cursor);
 
-        Uri currentUri = WeatherContract.CurrentConditionsEntry.buildCurrentConditionsUri(locationModel.getId());
+        Uri currentUri = WeatherContract.CurrentConditionsEntry.buildCurrentConditionsUri(weatherModel.getLocationId());
         Cursor cursorCurrent = context.getContentResolver().query(currentUri, WeatherContract.CurrentConditionsEntry.FORECAST_COLUMNS, null, null, null);
+
+        if (!cursorCurrent.moveToFirst()) {
+            Log.d(LOG_TAG, "Cannot load current conditions from db, count (" + cursorCurrent.getCount() + ")");
+        }
 
         CurrentConditionsModel currentModel = new CurrentConditionsModel();
         currentModel.loadFromCursor(cursorCurrent);
 
-        cursorCurrent.close();
 
         long weatherId = weatherModel.getWeatherId();
         boolean isMetric = Preferences.getUnitType(context).equals(context.getString(R.string.pref_units_metric));
 
         // Set icon
-        iconView.setImageResource(Utility.getArtResourceForWeatherCondition((int) weatherModel.getWeatherId()));
+        iconView.setImageResource(Utility.getArtResourceForWeatherCondition((int) weatherId));
 
         // Set accessibility property
         iconView.setContentDescription(weatherModel.getDescription());
 
-        // Set day
-        dayView.setText(weatherModel.getDayName(context));
-
         // Set date
-        dateView.setText(weatherModel.getFormattedMonthDay(context));
+        String formatDay = "EEE, d MMMM";
+        String formatTime = "HH:mm";
 
-        // Set description
-        descriptionView.setText(weatherModel.getDescription());
+        SimpleDateFormat dt = new SimpleDateFormat(formatDay);
+        SimpleDateFormat dt1 = new SimpleDateFormat(formatTime);
 
-        // Set temperature high
-        highTempView.setText(weatherModel.getFormattedMaxTemperature(context, isMetric));
+        String formattedDate = dt.format(weatherModel.getDateTime())
+                + " "
+                + dt1.format(System.currentTimeMillis());
 
-        // Set temperature low
-        lowTempView.setText(weatherModel.getFormattedMinTemperature(context, isMetric));
+        dateView.setText(formattedDate);
 
-        // Set humidity
-        humidityView.setText(weatherModel.getFormattedHumidity(context));
+        if (currentModel != null) {
+            currentView.setText(currentModel.getFormattedCurrentTemperature(context, isMetric));
+            String highLow = context.getString(R.string.format_highlow_temperature,
+                    Utility.getConvertedTemperature(weatherModel.getHigh(), isMetric),
+                    Utility.getConvertedTemperature(weatherModel.getLow(), isMetric));
+            highLowView.setText(highLow);
+        } else {
+            currentView.setText(weatherModel.getFormattedMaxTemperature(context, isMetric));
+            highLowView.setText(weatherModel.getFormattedMinTemperature(context, isMetric));
+        }
 
-        // Set pressure
-        pressureView.setText(weatherModel.getFormattedPressure(context));
+        weatherView.setText(currentModel.getDescription());
+        humidityView.setText(context.getString(R.string.format_humidity_today, currentModel.getHumidity()));
+        pressureView.setText(context.getString(R.string.format_pressure_today, currentModel.getHumidity()));
 
-        // Set wind details
-        windView.setText(weatherModel.getFormattedWindDetails(context));
+        String windDirection = Utility.getWindCompassDirections(currentModel.getWindDirection());
+        double windSpeed = Utility.getConvertedWindSpeed(currentModel.getWindSpeed(), isMetric);
+        int windFormat = isMetric ? R.string.format_wind_kmh_today : R.string.format_wind_mph_today;
+
+        windView.setText(context.getString(windFormat,
+                windSpeed,
+                windDirection));
+
+        // Set last sync date
+        long lastSync = Preferences.getLastSyncTime(context);
+        if (lastSync > 0) {
+            SimpleDateFormat sd = new SimpleDateFormat("d MMM HH:mm");
+            String syncText = context.getString(R.string.format_last_sync, sd.format(lastSync));
+            syncView.setText(syncText);
+        } else {
+            String syncText = context.getString(R.string.format_last_sync, "never");
+            syncView.setText(syncText);
+        }
 
         // Set location
         if (locationView != null) {
             locationView.setText(locationModel.getCityName());
         }
+
+        cursorCurrent.close();
     }
 
 }

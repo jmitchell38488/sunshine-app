@@ -203,12 +203,6 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
             return;
         }
 
-        /*Cursor cursor = getContext().getContentResolver().query(weatherUri, WeatherContract.FORECAST_COLUMNS, null, null, null);
-
-
-
-        getContext().getSystemService()*/
-
         onWeatherRefresh(cursor);
     }
 

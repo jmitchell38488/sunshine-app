@@ -3,6 +3,7 @@ package com.example.android.sunshine.app.data.model;
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.util.Preferences;
+import com.example.android.sunshine.app.util.Utility;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -174,13 +175,7 @@ public class WeatherModel {
      * @return
      */
     public String getFormattedTemperature(double temperature, Context context, boolean isMetric) {
-        double temp;
-        if (!isMetric) {
-            temp = 9 * temperature / 5 + 32;
-        } else {
-            temp = temperature;
-        }
-
+        double temp = Utility.getConvertedTemperature(temperature, isMetric);
         return context.getString(R.string.format_temperature, temp);
     }
 
@@ -202,38 +197,16 @@ public class WeatherModel {
 
     public String getFormattedWindDetails(Context context) {
         int windFormat;
+        String windD = Utility.getWindCompassDirections(windDirection);
+        double windS = Utility.getConvertedWindSpeed(windSpeed, isMetric(context));
         
         if (isMetric(context)) {
             windFormat = R.string.format_wind_kmh;
         } else {
             windFormat = R.string.format_wind_mph;
-            windSpeed = .621371192237334f * windSpeed;
         }
 
-        // From wind direction in degrees, determine compass direction as a string (e.g NW)
-        // You know what's fun, writing really long if/else statements with tons of possible
-        // conditions.  Seriously, try it!
-        String direction = "Unknown";
-
-        if (windDirection >= 337.5 || windDirection < 22.5) {
-            direction = "N";
-        } else if (windDirection >= 22.5 && windDirection < 67.5) {
-            direction = "NE";
-        } else if (windDirection >= 67.5 && windDirection < 112.5) {
-            direction = "E";
-        } else if (windDirection >= 112.5 && windDirection < 157.5) {
-            direction = "SE";
-        } else if (windDirection >= 157.5 && windDirection < 202.5) {
-            direction = "S";
-        } else if (windDirection >= 202.5 && windDirection < 247.5) {
-            direction = "SW";
-        } else if (windDirection >= 247.5 && windDirection < 292.5) {
-            direction = "W";
-        } else if (windDirection >= 292.5 && windDirection < 337.5) {
-            direction = "NW";
-        }
-
-        return String.format(context.getString(windFormat), windSpeed, direction);
+        return String.format(context.getString(windFormat), windS, windD);
     }
 
     /**

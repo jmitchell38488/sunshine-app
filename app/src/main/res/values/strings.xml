@@ -109,4 +109,24 @@
     <string name="format_empty_forecast_list">No weather information available</string>
     <string name="format_empty_forecast_list_no_network">No weather information available\nThe network is not available to fetch data</string>
 
+    <string name="today_pressure_text">Pressure</string>
+    <string name="today_humidity_text">Humidity</string>
+    <string name="today_wind_text">Wind</string>
+
+    <string name="format_last_sync">Updated <xliff:g id="l_date">%1$s</xliff:g></string>
+
+    <!-- Pressure format CHAR LIMIT=25] -->
+    <string name="format_pressure_today"><xliff:g id="pressure">%1.0f</xliff:g> hPa</string>
+
+    <!-- Humidity format CHAR LIMIT=25]-->
+    <string name="format_humidity_today"><xliff:g id="humidity">%1.0f</xliff:g> %%</string>
+
+    <!-- Humidity format CHAR LIMIT=25]-->
+    <string name="format_highlow_temperature"><xliff:g id="high_temp">%1.0f</xliff:g>\u00B0 / <xliff:g id="low_temp">%1.0f</xliff:g>\u00B0</string>
+
+    <!-- Humidity format CHAR LIMIT=25]-->
+    <string name="format_wind_mph_today"><xliff:g id="speed">%1$1.0f</xliff:g> mph <xliff:g id="direction">%2$s</xliff:g></string>
+    <!-- Wind in kph [CHAR LIMIT=25] -->
+    <string name="format_wind_kmh_today"><xliff:g id="speed">%1$1.0f</xliff:g> km/h <xliff:g id="direction">%2$s</xliff:g></string>
+
 </resources>
