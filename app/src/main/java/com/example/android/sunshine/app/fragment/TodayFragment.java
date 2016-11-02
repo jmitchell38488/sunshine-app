@@ -135,34 +135,6 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        /*View view = inflater.inflate(R.layout.fragment_today, container, false);
-
-        ScrollView sc;
-        LinearLayout ll;
-        ListView lv;
-
-        view.setTag(new TodayViewHolder(view));
-
-        TextView timesRunView = (TextView) view.findViewById(R.id.detail_times_run);
-        TextView lastSyncView = (TextView) view.findViewById(R.id.detail_last_sync);
-
-        timesRunView.setText(
-                "Times Run: " + Utility.getTimesRun(getActivity())
-        );
-
-        String lastSyncStr = "Never run";
-        long lastSync = Utility.getLastSyncTime(getActivity());
-        if (lastSync > 0) {
-            Date date = new Date();
-            date.setTime(lastSync);
-            lastSyncStr = date.toString();
-        }
-
-        lastSyncView.setText(
-                "Last Sync: " + lastSyncStr
-        );
-
-        return view;*/
         View view = inflater.inflate(R.layout.fragment_today, container, false);
         TodayViewHolder viewHolder = new TodayViewHolder(view);
         view.setTag(viewHolder);
@@ -204,6 +176,11 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         }
 
         onWeatherRefresh(cursor);
+    }
+
+    public void refreshLoader() {
+        Log.d(LOG_TAG, "Refreshing loader");
+        getLoaderManager().restartLoader(TODAY_LOADER, null, this);
     }
 
     public void onLocationChanged(String newLocation) {
