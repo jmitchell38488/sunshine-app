@@ -86,7 +86,7 @@ public class WeatherContract {
 
         public static final String TABLE_NAME = "location";
 
-        public static final String COLUMN_ID = "id";
+        public static final String COLUMN_ID = "_id";
         public static final String COLUMN_LOCATION_SETTING = "location_setting";
         public static final String COLUMN_CITY_NAME = "city_name";
         public static final String COLUMN_COORD_LAT = "coord_lat";
@@ -220,6 +220,13 @@ public class WeatherContract {
             return CONTENT_URI.buildUpon().appendPath(locationSetting).build();
         }
 
+        public static Uri buildWeatherLocationIdToday(long locationId) {
+            return CONTENT_URI.buildUpon()
+                    .appendPath(Long.toString(locationId))
+                    .appendPath("today")
+                    .build();
+        }
+
         public static Uri buildWeatherLocationWithStartDate(
                 String locationSetting, long startDate) {
             long normalizedDate = normalizeDate(startDate);
@@ -235,7 +242,7 @@ public class WeatherContract {
         public static Uri buildWeatherToday(long locationId) {
             return CONTENT_URI.buildUpon().appendPath(Long.toString(locationId))
                     .appendPath("today")
-                    .build();
+            .build();
         }
 
         public static Uri buildWeatherToday(String locationSetting) {
@@ -246,6 +253,10 @@ public class WeatherContract {
 
         public static String getLocationSettingFromUri(Uri uri) {
             return uri.getPathSegments().get(1);
+        }
+
+        public static long getLocationIdFromUri(Uri uri) {
+            return Long.parseLong(uri.getPathSegments().get(1));
         }
 
         public static long getDateFromUri(Uri uri) {

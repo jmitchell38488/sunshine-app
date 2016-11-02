@@ -2,11 +2,14 @@ package com.example.android.sunshine.app.view;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.android.sunshine.app.R;
+import com.example.android.sunshine.app.data.WeatherContract;
+import com.example.android.sunshine.app.data.model.CurrentConditionsModel;
 import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.data.model.WeatherModel;
 import com.example.android.sunshine.app.util.Preferences;
@@ -57,6 +60,14 @@ public class TodayViewHolder {
 
         LocationModel locationModel = new LocationModel();
         locationModel.loadFromCursor(cursor);
+
+        Uri currentUri = WeatherContract.CurrentConditionsEntry.buildCurrentConditionsUri(locationModel.getId());
+        Cursor cursorCurrent = context.getContentResolver().query(currentUri, WeatherContract.CurrentConditionsEntry.FORECAST_COLUMNS, null, null, null);
+
+        CurrentConditionsModel currentModel = new CurrentConditionsModel();
+        currentModel.loadFromCursor(cursorCurrent);
+
+        cursorCurrent.close();
 
         long weatherId = weatherModel.getWeatherId();
         boolean isMetric = Preferences.getUnitType(context).equals(context.getString(R.string.pref_units_metric));

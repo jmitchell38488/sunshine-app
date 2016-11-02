@@ -11,7 +11,6 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.SyncRequest;
 import android.content.SyncResult;
 import android.database.Cursor;
@@ -19,10 +18,8 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
-import android.text.format.Time;
 import android.util.Log;
 
 import com.example.android.sunshine.app.BuildConfig;
@@ -116,11 +113,12 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 item.setLocationId(locationId);
             }
 
+            // Remove expired items from the data store
+            removeOldWeatherItems(locationId);
+
             // Save weather items to the data store
             addWeatherItems(weatherItems);
 
-            // Remove expired items from the data store
-            removeOldWeatherItems();
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
             e.printStackTrace();
@@ -166,69 +164,49 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         }
     }
 
-    private void removeOldWeatherItems() {
-        // Initialize the date/time objects
-        Time dayTime = new Time();
-        dayTime.setToNow();
-
-        // we start at the day returned by local time. Otherwise this is a mess.
-        int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
-
-        // now we work exclusively in UTC
-        dayTime = new Time();
+    private void removeOldWeatherItems(long locationId) {
+        long deleteTime = Utility.getMidnightTimeToday();
 
         getContext().getContentResolver().delete(WeatherContract.WeatherEntry.CONTENT_URI,
-                WeatherContract.WeatherEntry.COLUMN_DATE + " <= ?",
-                new String[] {Long.toString(dayTime.setJulianDay(julianStartDay-1))});
+                WeatherContract.WeatherEntry.COLUMN_LOC_KEY + " = ?",
+                new String[] {Long.toString(locationId)});
     }
 
     private void removeOldCurrentConditionsItems(long locationId) {
-        // Initialize the date/time objects
-        Time dayTime = new Time();
-        dayTime.setToNow();
-
-        // we start at the day returned by local time. Otherwise this is a mess.
-        int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
-
-        // now we work exclusively in UTC
-        dayTime = new Time();
+        long deleteTime = Utility.getMidnightTimeToday();
 
         getContext().getContentResolver().delete(WeatherContract.CurrentConditionsEntry.CONTENT_URI,
                 WeatherContract.CurrentConditionsEntry.COLUMN_DATE + " <= ? AND " +
                 WeatherContract.CurrentConditionsEntry.COLUMN_LOC_KEY + " = ?",
                 new String[] {
-                        Long.toString(dayTime.setJulianDay(julianStartDay-1)),
+                        Long.toString(deleteTime),
                         Long.toString(locationId)
                 });
     }
 
     private void notifyWeather() {
-        Context context = getContext();
-        //checking the last update and notify if it' the first of the day
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-
         // Don't notify if the user has disabled notifications
-        if (!Preferences.userDisplayNotifications(context)) {
+        if (!Preferences.userDisplayNotifications(getContext())) {
             return;
         }
 
-        String lastNotificationKey = context.getString(R.string.pref_last_notification);
-        long lastSync = prefs.getLong(lastNotificationKey, 0);
+        // Get last notification time
+        long lastNotif = Preferences.getLastNotificationTime(getContext());
 
         // Get the notification time with the sync frequency minus 1 minute so that it will always notify
-        long weatherNotificationDetail = (Long.parseLong(Preferences.getSyncFrequency(context)) * 3600) - 60;
+        long weatherNotificationDetail = (Long.parseLong(Preferences.getSyncFrequency(getContext())) * 3600) - 60;
 
-        if (System.currentTimeMillis() - lastSync < weatherNotificationDetail) {
+        if (System.currentTimeMillis() - lastNotif < weatherNotificationDetail) {
             return;
         }
 
         // Last sync was more than 1 day ago, let's send a notification with the weather.
-        String locationQuery = Preferences.getPreferredLocation(context);
+        String locationQuery = Preferences.getPreferredLocation(getContext());
 
         Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
 
         // we'll query our contentProvider, as always
-        Cursor cursor = context.getContentResolver().query(weatherUri, WeatherContract.FORECAST_COLUMNS, null, null, null);
+        Cursor cursor = getContext().getContentResolver().query(weatherUri, WeatherContract.FORECAST_COLUMNS, null, null, null);
 
         if (cursor.moveToFirst()) {
             WeatherModel weatherModel = new WeatherModel();
@@ -237,7 +215,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             weatherModel.loadFromCursor(cursor);
 
             Uri currentUri = WeatherContract.CurrentConditionsEntry.buildCurrentConditionsUri(weatherModel.getLocationId());
-            Cursor conditionsCursor = context.getContentResolver().query(
+            Cursor conditionsCursor = getContext().getContentResolver().query(
                     currentUri,
                     WeatherContract.CurrentConditionsEntry.FORECAST_COLUMNS,
                     WeatherContract.CurrentConditionsEntry.COLUMN_LOC_KEY + " = ?",
@@ -253,24 +231,24 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             }
 
             int iconId = Utility.getIconResourceForWeatherCondition((int) weatherModel.getWeatherId());
-            String title = context.getString(R.string.app_name);
+            String title = getContext().getString(R.string.app_name);
 
             // Define the text of the forecast.
             String contentText = "";
             if (currentModel == null) {
                 contentText = String.format(
-                        context.getString(R.string.format_notification),
+                        getContext().getString(R.string.format_notification),
                         weatherModel.getDescription(),
-                        weatherModel.getFormattedMaxTemperature(context, weatherModel.isMetric(context)),
-                        weatherModel.getFormattedMinTemperature(context, weatherModel.isMetric(context)));
+                        weatherModel.getFormattedMaxTemperature(getContext(), weatherModel.isMetric(getContext())),
+                        weatherModel.getFormattedMinTemperature(getContext(), weatherModel.isMetric(getContext())));
             } else {
                 contentText = String.format(
-                        context.getString(R.string.format_notification_current),
-                        currentModel.getFormattedCurrentTemperature(context, currentModel.isMetric(context)),
+                        getContext().getString(R.string.format_notification_current),
+                        currentModel.getFormattedCurrentTemperature(getContext(), currentModel.isMetric(getContext())),
                         currentModel.getDescription(),
                         weatherModel.getDescription(),
-                        weatherModel.getFormattedMaxTemperature(context, weatherModel.isMetric(context)),
-                        weatherModel.getFormattedMinTemperature(context, weatherModel.isMetric(context)));
+                        weatherModel.getFormattedMaxTemperature(getContext(), weatherModel.isMetric(getContext())),
+                        weatherModel.getFormattedMinTemperature(getContext(), weatherModel.isMetric(getContext())));
             }
 
             Log.d(LOG_TAG, "Notification (" + contentText + ")");
@@ -285,13 +263,13 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
             // Make something interesting happen when the user clicks on the notification.
             // In this case, opening the app is sufficient.
-            Intent resultIntent = new Intent(context, MainActivity.class);
+            Intent resultIntent = new Intent(getContext(), MainActivity.class);
 
             // The stack builder object will contain an artificial back stack for the
             // started Activity.
             // This ensures that navigating backward from the Activity leads out of
             // your application to the Home screen.
-            TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+            TaskStackBuilder stackBuilder = TaskStackBuilder.create(getContext());
             stackBuilder.addNextIntent(resultIntent);
             PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
             mBuilder.setContentIntent(resultPendingIntent);
@@ -300,12 +278,6 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                     (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
             // WEATHER_NOTIFICATION_ID allows you to update the notification later on.
             mNotificationManager.notify(WEATHER_NOTIFICATION_ID, mBuilder.build());
-
-
-            //refreshing last sync
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putLong(lastNotificationKey, System.currentTimeMillis());
-            editor.commit();
         }
     }
 

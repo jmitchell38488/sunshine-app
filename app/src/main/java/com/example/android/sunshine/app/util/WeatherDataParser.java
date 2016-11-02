@@ -36,6 +36,7 @@ public class WeatherDataParser {
     public WeatherModel[] convertWeatherData() throws JSONException {
         // These are the names of the JSON objects that need to be extracted.
         final String OWM_LIST = "list";
+        final String OWM_DATE = "dt";
         final String OWM_WEATHER = "weather";
         final String OWM_TEMPERATURE = "temp";
         final String OWM_WEATHER_ID = "id";
@@ -49,40 +50,28 @@ public class WeatherDataParser {
 
         JSONArray weatherArray = forecastJson.getJSONArray(OWM_LIST);
 
-        // OWM returns daily forecasts based upon the local time of the city that is being
-        // asked for, which means that we need to know the GMT offset to translate this data
-        // properly.
-
-        // Since this data is also sent in-order and the first day is always the
-        // current day, we're going to take advantage of that to get a nice
-        // normalized UTC date for all of our weather.
-
-        Time dayTime = new Time();
-        dayTime.setToNow();
-
-        // we start at the day returned by local time. Otherwise this is a mess.
-        int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
-
-        // now we work exclusively in UTC
-        dayTime = new Time();
-
         WeatherModel[] weatherItems = new WeatherModel[weatherArray.length()];
         for(int i = 0; i < weatherArray.length(); i++) {
             // initialize
-            long dateTime;
             WeatherModel model = new WeatherModel();
-
-            // Update the date
-            dateTime = dayTime.setJulianDay(julianStartDay+i);
-            model.setDateTime(dateTime);
 
             // Get the JSON object representing the day
             JSONObject dayForecast = weatherArray.getJSONObject(i);
             JSONObject weatherObject = dayForecast.getJSONArray(OWM_WEATHER).getJSONObject(0);
             JSONObject tempObject = dayForecast.getJSONObject(OWM_TEMPERATURE);
 
+            // Dates from Open Weather Map are UTC/GMT 02:00:00, so need to subtract 2 hours from the
+            // times when fetching daily forecast data
+            long dateTime = dayForecast.getLong(OWM_DATE);
+
+            // Dates are UTC, but offset by 2 hours
+            dateTime -= 60*60*2;
+            // Convert to milliseconds
+            dateTime *= 1000;
+
             // Update Weather Model
             model.setId(0);
+            model.setDateTime(dateTime);
             model.setLocationId(0);
             model.setWeatherId(weatherObject.getInt(OWM_WEATHER_ID));
             model.setDescription(weatherObject.getString(OWM_WEATHER_DESC));

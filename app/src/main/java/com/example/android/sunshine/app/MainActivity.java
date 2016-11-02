@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        String location = Preferences.getPreferredLocation(this);
+        String location = Preferences.getPreferredLocation(this);/*
 
         // Trigger an onLocationChanged() action in the ForecastFragment if the location string is changed
         if (location != null && !location.equals(mLocation)) {
@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             mLocation = location;
-        }
+        }*/
     }
 
     @Override

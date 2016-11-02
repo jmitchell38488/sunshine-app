@@ -19,6 +19,8 @@ import android.widget.Toast;
 import com.example.android.sunshine.app.MainActivity;
 import com.example.android.sunshine.app.R;
 
+import java.util.Date;
+
 /**
  * Created by justinmitchell on 29/10/2016.
  */
@@ -254,6 +256,19 @@ public class Utility {
                 actionBar.hide();
             }
         }
+    }
+
+    /**
+     * Helper method to return the midnight time for today. This is used to compare to the UTC
+     * stored dates for the weather forecasts.
+     *
+     * @return the unix timestamp in milliseconds for today at midnight
+     */
+    public static long getMidnightTimeToday() {
+        long time = new Date().getTime();
+        Date date = new Date(time - time % (24 * 60 * 60 * 1000));
+
+        return date.getTime();
     }
 
 }

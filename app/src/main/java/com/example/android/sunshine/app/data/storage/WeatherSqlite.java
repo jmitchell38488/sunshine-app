@@ -9,6 +9,7 @@ import android.net.Uri;
 
 import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.data.WeatherDbHelper;
+import com.example.android.sunshine.app.util.Utility;
 
 /**
  * Created by justinmitchell on 27/10/2016.
@@ -57,6 +58,11 @@ public class WeatherSqlite implements IStorage {
             WeatherContract.WeatherEntry.TABLE_NAME +
                     "." + WeatherContract.WeatherEntry.COLUMN_DATE + " >= ? ";
 
+    private static final String sLocationIdWithStartDateSelection =
+            WeatherContract.LocationEntry.TABLE_NAME +
+                    "." + WeatherContract.LocationEntry.COLUMN_ID + " = ? AND " +
+                    WeatherContract.WeatherEntry.TABLE_NAME +
+                    "." + WeatherContract.WeatherEntry.COLUMN_DATE + " = ? ";
 
     private static final String sLocationSettingAndDaySelection =
             WeatherContract.LocationEntry.TABLE_NAME +
@@ -184,6 +190,48 @@ public class WeatherSqlite implements IStorage {
 
         return this.query(
                 WeatherContract.CurrentConditionsEntry.TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
+    public Cursor getWeatherTodayByLocationId(Uri uri, String[] projection, String sortOrder) {
+        long locationId = WeatherContract.WeatherEntry.getLocationIdFromUri(uri);
+        long date = Utility.getMidnightTimeToday();
+
+        String[] selectionArgs = new String[] {
+                Long.toString(locationId),
+                Long.toString(date)
+        };
+
+        String selection = sLocationIdWithStartDateSelection;
+
+        return this.query(
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
+    public Cursor getWeatherTodayByLocationSetting(Uri uri, String[] projection, String sortOrder) {
+        String locationSetting = WeatherContract.WeatherEntry.getLocationSettingFromUri(uri);
+        long date = Utility.getMidnightTimeToday();
+
+        String[] selectionArgs = new String[] {
+                locationSetting,
+                Long.toString(date)
+        };
+
+        String selection = sLocationSettingWithStartDateSelection;
+
+        return this.query(
                 projection,
                 selection,
                 selectionArgs,

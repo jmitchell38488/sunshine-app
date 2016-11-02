@@ -19,7 +19,9 @@ import android.widget.Toast;
 
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.WeatherContract;
+import com.example.android.sunshine.app.data.model.CurrentConditionsModel;
 import com.example.android.sunshine.app.data.model.LocationModel;
+import com.example.android.sunshine.app.data.model.WeatherModel;
 import com.example.android.sunshine.app.sync.SunshineSyncAdapter;
 import com.example.android.sunshine.app.util.Preferences;
 import com.example.android.sunshine.app.util.Utility;
@@ -51,7 +53,8 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
 
         long lastLocationId = Preferences.getLastUsedLocation(getActivity());
         if (lastLocationId > 0) {
-            mUri = WeatherContract.CurrentConditionsEntry.buildCurrentConditionsUri(lastLocationId);
+            mUri = WeatherContract.WeatherEntry.buildWeatherLocationIdToday(lastLocationId);
+            Log.d(LOG_TAG, mUri.toString());
         }
     }
 
@@ -184,7 +187,7 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         return new CursorLoader(
                 getActivity(),
                 mUri,
-                WeatherContract.CurrentConditionsEntry.FORECAST_COLUMNS,
+                WeatherContract.FORECAST_COLUMNS,
                 null,
                 null,
                 null
@@ -196,8 +199,15 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         Log.v(LOG_TAG, "In onLoadFinished");
 
         if (!cursor.moveToFirst()) {
+            Log.d(LOG_TAG, "Could not move to first, cursor count: " + cursor.getCount());
             return;
         }
+
+        /*Cursor cursor = getContext().getContentResolver().query(weatherUri, WeatherContract.FORECAST_COLUMNS, null, null, null);
+
+
+
+        getContext().getSystemService()*/
 
         onWeatherRefresh(cursor);
     }

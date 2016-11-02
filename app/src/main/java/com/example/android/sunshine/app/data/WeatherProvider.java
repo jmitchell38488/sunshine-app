@@ -49,6 +49,18 @@ public class WeatherProvider extends ContentProvider {
         Cursor retCursor;
         switch (sUriMatcher.match(uri)) {
 
+            // "weather/#/today"
+            case WEATHER_WITH_LOCATIONID_TODAY: {
+                retCursor = weatherStorage.getWeatherTodayByLocationId(uri, projection, sortOrder);
+                break;
+            }
+
+            // "weather/*/today"
+            case WEATHER_WITH_LOCATIONSETTING_TODAY: {
+                retCursor = weatherStorage.getWeatherTodayByLocationSetting(uri, projection, sortOrder);
+                break;
+            }
+
             // "weather/*/*"
             case WEATHER_WITH_LOCATION_AND_DATE: {
                 retCursor = weatherStorage.getWeatherByLocationSettingAndDate(uri, projection, sortOrder);
@@ -101,7 +113,6 @@ public class WeatherProvider extends ContentProvider {
 
         switch (match) {
             case WEATHER: {
-                normalizeDate(contentValues);
                 long id = weatherStorage.insert(WeatherContract.WeatherEntry.TABLE_NAME, contentValues);
 
                 if (id > 0) {
@@ -187,7 +198,6 @@ public class WeatherProvider extends ContentProvider {
 
         switch (match) {
             case WEATHER:
-                normalizeDate(values);
                 rowsUpdated = weatherStorage.update(WeatherContract.WeatherEntry.TABLE_NAME, values, selection, selectionArgs);
                 break;
 
@@ -217,19 +227,11 @@ public class WeatherProvider extends ContentProvider {
 
         switch (match) {
             case WEATHER:
-                for (ContentValues recordSet : values) {
-                    normalizeDate(recordSet);
-                }
-
                 returnCount = weatherStorage.bulkInsert(WeatherContract.WeatherEntry.TABLE_NAME, values);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return returnCount;
 
             case CURRENT_CONDITIONS:
-                for (ContentValues recordSet : values) {
-                    normalizeDate(recordSet);
-                }
-
                 returnCount = weatherStorage.bulkInsert(WeatherContract.CurrentConditionsEntry.TABLE_NAME, values);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return returnCount;
@@ -296,11 +298,11 @@ public class WeatherProvider extends ContentProvider {
         // Match weather with any string (eg /weather/3059,au)
         matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*", WEATHER_WITH_LOCATION);
 
-        // Match weather with location setting and today (eg /weather/3059,au/today)
-        matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*/today", WEATHER_WITH_LOCATIONSETTING_TODAY);
-
         // Match weather with location id and today (eg /weather/1/today)
-        matcher.addURI(authority, WeatherContract.PATH_CURRENT + "/#/today", CURRENT_WITH_ID);
+        matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/#/today", WEATHER_WITH_LOCATIONSETTING_TODAY);
+
+        // Match weather with location setting and today (eg /weather/3059,au/today)
+        matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*/today", WEATHER_WITH_LOCATIONID_TODAY);
 
         // Match weather with location setting and date (eg /weather/3059,au/111111111)
         matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*/#", WEATHER_WITH_LOCATION_AND_DATE);
@@ -314,15 +316,6 @@ public class WeatherProvider extends ContentProvider {
         // Match current conditions with location id (/current/1)
         matcher.addURI(authority, WeatherContract.PATH_CURRENT + "/#", CURRENT_WITH_ID);
         return matcher;
-    }
-
-
-    private void normalizeDate(ContentValues values) {
-        // normalize the date value
-        if (values.containsKey(WeatherContract.WeatherEntry.COLUMN_DATE)) {
-            long dateValue = values.getAsLong(WeatherContract.WeatherEntry.COLUMN_DATE);
-            values.put(WeatherContract.WeatherEntry.COLUMN_DATE, WeatherContract.normalizeDate(dateValue));
-        }
     }
 
 }
