@@ -9,6 +9,7 @@
     <!-- Main activity theme. -->
     <style name="ForecastTheme" parent="AppTheme">
         <item name="actionBarStyle">@style/ActionBar.Solid.Sunshine.NoTitle</item>
+        <item name="android:windowContentOverlay">@null</item>
     </style>
 
     <!-- Settings activity theme. -->

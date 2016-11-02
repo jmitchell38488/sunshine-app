@@ -11,6 +11,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -33,13 +34,13 @@ import com.example.android.sunshine.app.view.TodayViewHolder;
 /**
  * Created by justinmitchell on 1/11/2016.
  */
-
 public class TodayFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String LOG_TAG = TodayFragment.class.getSimpleName();
     private static final int TODAY_LOADER = 50;
 
     private BroadcastReceiver mBroadcastReceiver;
+    private SwipeRefreshLayout mSwipeRefresh;
 
     private Uri mUri;
 
@@ -52,7 +53,7 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         super.onCreate(savedInstanceState);
 
         // Add this line in order for this fragment to handle menu events.
-        setHasOptionsMenu(true);
+        setHasOptionsMenu(false);
         Utility.hideStatusBar(getActivity());
 
         long lastLocationId = Preferences.getLastUsedLocation(getActivity());
@@ -64,7 +65,8 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.forecastfragment, menu);
+        setHasOptionsMenu(false);
+        //inflater.inflate(R.menu.forecastfragment, menu);
     }
 
     @Override
@@ -228,6 +230,23 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         };
 
         getActivity().registerReceiver(mBroadcastReceiver, new IntentFilter(Intent.ACTION_TIME_TICK));
+
+        mSwipeRefresh = (SwipeRefreshLayout) getActivity().findViewById(R.id.swiperefresh_today);
+        mSwipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                Log.i(LOG_TAG, "onRefresh called from SwipeRefreshLayout");
+
+                // Signal SwipeRefreshLayout to start the progress indicator
+                mSwipeRefresh.setRefreshing(true);
+
+                // Peform update
+                updateWeather();
+
+                // Signal SwipeRefreshLayout to stop the progress indicator
+                mSwipeRefresh.setRefreshing(false);
+            }
+        });
     }
 
     @Override
@@ -242,5 +261,4 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
             getActivity().unregisterReceiver(mBroadcastReceiver);
         }
     }
-
 }
