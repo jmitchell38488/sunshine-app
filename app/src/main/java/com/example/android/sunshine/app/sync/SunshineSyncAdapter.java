@@ -2,6 +2,7 @@ package com.example.android.sunshine.app.sync;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.AbstractThreadedSyncAdapter;
@@ -78,7 +79,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             syncCurrentData(locationId);
 
             Log.d(LOG_TAG, "Triggering notifyWeather");
-            notifyWeather();
+            notifyWeather(locationId);
         }
     }
 
@@ -184,7 +185,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 });
     }
 
-    private void notifyWeather() {
+    private void notifyWeather(long locationId) {
         // Don't notify if the user has disabled notifications
         if (!Preferences.userDisplayNotifications(getContext())) {
             return;
@@ -196,89 +197,97 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
         // Get the notification time with the sync frequency minus 1 minute so that it will always notify
         long weatherNotificationDetail = (Long.parseLong(Preferences.getSyncFrequency(getContext())) * 3600) - 60;
 
-        if (System.currentTimeMillis() - lastNotif < weatherNotificationDetail) {
+        /*if (System.currentTimeMillis() - lastNotif < weatherNotificationDetail) {
             return;
-        }
+        }*/
 
         // Last sync was more than 1 day ago, let's send a notification with the weather.
         String locationQuery = Preferences.getPreferredLocation(getContext());
 
-        Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
+        // Get today's weather
+        Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherToday(locationId);
 
         // we'll query our contentProvider, as always
         Cursor cursor = getContext().getContentResolver().query(weatherUri, WeatherContract.FORECAST_COLUMNS, null, null, null);
 
-        if (cursor.moveToFirst()) {
-            WeatherModel weatherModel = new WeatherModel();
-            CurrentConditionsModel currentModel = null;
-
-            weatherModel.loadFromCursor(cursor);
-
-            Uri currentUri = WeatherContract.CurrentConditionsEntry.buildCurrentConditionsUri(weatherModel.getLocationId());
-            Cursor conditionsCursor = getContext().getContentResolver().query(
-                    currentUri,
-                    WeatherContract.CurrentConditionsEntry.FORECAST_COLUMNS,
-                    WeatherContract.CurrentConditionsEntry.COLUMN_LOC_KEY + " = ?",
-                    new String[] {
-                            Long.toString(weatherModel.getLocationId())
-                    },
-                    WeatherContract.CurrentConditionsEntry.COLUMN_DATE + " DESC"
-            );
-
-            if (conditionsCursor != null && conditionsCursor.moveToFirst()) {
-                currentModel = new CurrentConditionsModel();
-                currentModel.loadFromCursor(conditionsCursor);
-            }
-
-            int iconId = Utility.getIconResourceForWeatherCondition((int) weatherModel.getWeatherId());
-            String title = getContext().getString(R.string.app_name);
-
-            // Define the text of the forecast.
-            String contentText = "";
-            if (currentModel == null) {
-                contentText = String.format(
-                        getContext().getString(R.string.format_notification),
-                        weatherModel.getDescription(),
-                        weatherModel.getFormattedMaxTemperature(getContext(), weatherModel.isMetric(getContext())),
-                        weatherModel.getFormattedMinTemperature(getContext(), weatherModel.isMetric(getContext())));
-            } else {
-                contentText = String.format(
-                        getContext().getString(R.string.format_notification_current),
-                        currentModel.getFormattedCurrentTemperature(getContext(), currentModel.isMetric(getContext())),
-                        currentModel.getDescription(),
-                        weatherModel.getDescription(),
-                        weatherModel.getFormattedMaxTemperature(getContext(), weatherModel.isMetric(getContext())),
-                        weatherModel.getFormattedMinTemperature(getContext(), weatherModel.isMetric(getContext())));
-            }
-
-            Log.d(LOG_TAG, "Notification (" + contentText + ")");
-
-            // NotificationCompatBuilder is a very convenient way to build backward-compatible
-            // notifications.  Just throw in some data.
-            NotificationCompat.Builder mBuilder =
-                    new NotificationCompat.Builder(getContext())
-                            .setSmallIcon(iconId)
-                            .setContentTitle(title)
-                            .setContentText(contentText);
-
-            // Make something interesting happen when the user clicks on the notification.
-            // In this case, opening the app is sufficient.
-            Intent resultIntent = new Intent(getContext(), MainActivity.class);
-
-            // The stack builder object will contain an artificial back stack for the
-            // started Activity.
-            // This ensures that navigating backward from the Activity leads out of
-            // your application to the Home screen.
-            TaskStackBuilder stackBuilder = TaskStackBuilder.create(getContext());
-            stackBuilder.addNextIntent(resultIntent);
-            PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-            mBuilder.setContentIntent(resultPendingIntent);
-
-            NotificationManager mNotificationManager =
-                    (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
-            // WEATHER_NOTIFICATION_ID allows you to update the notification later on.
-            mNotificationManager.notify(WEATHER_NOTIFICATION_ID, mBuilder.build());
+        if (!cursor.moveToFirst()) {
+            Log.d(LOG_TAG, "Could not notify weather, cursor is empty or invalid");
+            return;
         }
+
+        WeatherModel weatherModel = new WeatherModel();
+        CurrentConditionsModel currentModel = null;
+
+        weatherModel.loadFromCursor(cursor);
+
+        Uri currentUri = WeatherContract.CurrentConditionsEntry.buildCurrentConditionsUri(weatherModel.getLocationId());
+        Cursor conditionsCursor = getContext().getContentResolver().query(
+                currentUri,
+                WeatherContract.CurrentConditionsEntry.FORECAST_COLUMNS,
+                WeatherContract.CurrentConditionsEntry.COLUMN_LOC_KEY + " = ?",
+                new String[] {
+                        Long.toString(weatherModel.getLocationId())
+                },
+                WeatherContract.CurrentConditionsEntry.COLUMN_DATE + " DESC"
+        );
+
+        if (conditionsCursor != null && conditionsCursor.moveToFirst()) {
+            currentModel = new CurrentConditionsModel();
+            currentModel.loadFromCursor(conditionsCursor);
+        }
+
+        int iconId = Utility.getIconResourceForWeatherCondition((int) weatherModel.getWeatherId());
+        String title = getContext().getString(R.string.app_name);
+
+        // Define the text of the forecast.
+        String contentText = "";
+        if (currentModel == null) {
+            contentText = String.format(
+                    getContext().getString(R.string.format_notification),
+                    weatherModel.getDescription(),
+                    weatherModel.getFormattedMaxTemperature(getContext(), weatherModel.isMetric(getContext())),
+                    weatherModel.getFormattedMinTemperature(getContext(), weatherModel.isMetric(getContext())));
+        } else {
+            contentText = String.format(
+                    getContext().getString(R.string.format_notification_current),
+                    currentModel.getFormattedCurrentTemperature(getContext(), currentModel.isMetric(getContext())),
+                    currentModel.getDescription(),
+                    weatherModel.getDescription(),
+                    weatherModel.getFormattedMaxTemperature(getContext(), weatherModel.isMetric(getContext())),
+                    weatherModel.getFormattedMinTemperature(getContext(), weatherModel.isMetric(getContext())));
+        }
+
+        Log.d(LOG_TAG, "Notification (" + contentText + ")");
+
+        // NotificationCompatBuilder is a very convenient way to build backward-compatible
+        // notifications.  Just throw in some data.
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(getContext())
+                        .setSmallIcon(iconId)
+                        .setContentTitle(title)
+                        .setContentText(contentText);
+
+        // Make something interesting happen when the user clicks on the notification.
+        // In this case, opening the app is sufficient.
+        Intent resultIntent = new Intent(getContext(), MainActivity.class);
+
+        // The stack builder object will contain an artificial back stack for the
+        // started Activity.
+        // This ensures that navigating backward from the Activity leads out of
+        // your application to the Home screen.
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(getContext());
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        mBuilder.setContentIntent(resultPendingIntent);
+
+        NotificationManager mNotificationManager =
+                (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Set auto cancel
+        mBuilder.getNotification().flags |= Notification.FLAG_AUTO_CANCEL;
+
+        // WEATHER_NOTIFICATION_ID allows you to update the notification later on.
+        mNotificationManager.notify(WEATHER_NOTIFICATION_ID, mBuilder.build());
     }
 
     /**

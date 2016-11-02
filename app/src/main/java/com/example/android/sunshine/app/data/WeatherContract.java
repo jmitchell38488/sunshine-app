@@ -239,14 +239,23 @@ public class WeatherContract {
                     .appendPath(Long.toString(normalizeDate(date))).build();
         }
 
+        public static Uri buildWeatherLocationIdWithDate(long locationId, long timestamp) {
+            return CONTENT_URI.buildUpon()
+                    .appendPath(Long.toString(locationId))
+                    .appendPath(Long.toString(timestamp))
+                    .build();
+        }
+
         public static Uri buildWeatherToday(long locationId) {
-            return CONTENT_URI.buildUpon().appendPath(Long.toString(locationId))
+            return CONTENT_URI.buildUpon()
+                    .appendPath(Long.toString(locationId))
                     .appendPath("today")
-            .build();
+                    .build();
         }
 
         public static Uri buildWeatherToday(String locationSetting) {
-            return CONTENT_URI.buildUpon().appendPath(locationSetting)
+            return CONTENT_URI.buildUpon()
+                    .appendPath(locationSetting)
                     .appendPath("today")
                     .build();
         }
