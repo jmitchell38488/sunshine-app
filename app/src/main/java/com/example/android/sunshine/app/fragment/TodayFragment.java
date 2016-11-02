@@ -1,6 +1,9 @@
 package com.example.android.sunshine.app.fragment;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -35,7 +38,8 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
 
     private static final String LOG_TAG = TodayFragment.class.getSimpleName();
     private static final int TODAY_LOADER = 50;
-    public static final String DETAIL_URI = "URI";
+
+    private BroadcastReceiver mBroadcastReceiver;
 
     private Uri mUri;
 
@@ -206,6 +210,37 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         // do nothing
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // Time ticker per minute: http://stackoverflow.com/a/13059819/1740059
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction().compareTo(Intent.ACTION_TIME_TICK) == 0) {
+                    TodayViewHolder viewHolder = (TodayViewHolder) getView().getTag();
+                    viewHolder.redrawDateTime();
+                }
+            }
+        };
+
+        getActivity().registerReceiver(mBroadcastReceiver, new IntentFilter(Intent.ACTION_TIME_TICK));
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (mBroadcastReceiver != null) {
+            getActivity().unregisterReceiver(mBroadcastReceiver);
+        }
     }
 
 }

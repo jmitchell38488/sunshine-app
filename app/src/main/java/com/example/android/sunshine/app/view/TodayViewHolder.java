@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat;
 public class TodayViewHolder {
 
     private static String LOG_TAG = TodayViewHolder.class.getSimpleName();
+    private long lastWeatherDateTime = 0;
 
     public final TextView syncView;
     public final TextView locationView;
@@ -60,6 +61,8 @@ public class TodayViewHolder {
             return;
         }
 
+        Log.d(LOG_TAG, "Redrawing FragmentToday.TodayViewHolder");
+
         WeatherModel weatherModel = new WeatherModel();
         weatherModel.loadFromCursor(cursor);
 
@@ -87,17 +90,8 @@ public class TodayViewHolder {
         iconView.setContentDescription(weatherModel.getDescription());
 
         // Set date
-        String formatDay = "EEE, d MMMM";
-        String formatTime = "HH:mm";
-
-        SimpleDateFormat dt = new SimpleDateFormat(formatDay);
-        SimpleDateFormat dt1 = new SimpleDateFormat(formatTime);
-
-        String formattedDate = dt.format(weatherModel.getDateTime())
-                + " "
-                + dt1.format(System.currentTimeMillis());
-
-        dateView.setText(formattedDate);
+        lastWeatherDateTime = weatherModel.getDateTime();
+        redrawDateTime();
 
         if (currentModel != null) {
             currentView.setText(currentModel.getFormattedCurrentTemperature(context, isMetric));
@@ -139,6 +133,19 @@ public class TodayViewHolder {
         }
 
         cursorCurrent.close();
+    }
+
+    /**
+     * Helper method to redraw the date time. This is called when the UI is updated but also
+     * when the BroadcastReceiver is notified of the time update Intent.ACTION_TIME_TICK
+     */
+    public void redrawDateTime() {
+        // Set date
+        String formatDay = "EEE, d MMMM HH:mm";
+        SimpleDateFormat dt = new SimpleDateFormat(formatDay);
+        String formattedDate = dt.format(System.currentTimeMillis());
+
+        dateView.setText(formattedDate);
     }
 
 }
