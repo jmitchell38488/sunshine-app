@@ -23,9 +23,7 @@ import android.widget.Toast;
 
 import com.example.android.sunshine.app.R;
 import com.example.android.sunshine.app.data.WeatherContract;
-import com.example.android.sunshine.app.data.model.CurrentConditionsModel;
 import com.example.android.sunshine.app.data.model.LocationModel;
-import com.example.android.sunshine.app.data.model.WeatherModel;
 import com.example.android.sunshine.app.sync.SunshineSyncAdapter;
 import com.example.android.sunshine.app.util.Preferences;
 import com.example.android.sunshine.app.util.Utility;
@@ -53,7 +51,7 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         super.onCreate(savedInstanceState);
 
         // Add this line in order for this fragment to handle menu events.
-        setHasOptionsMenu(false);
+        setHasOptionsMenu(true);
         Utility.hideStatusBar(getActivity());
 
         long lastLocationId = Preferences.getLastUsedLocation(getActivity());
@@ -65,8 +63,7 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        setHasOptionsMenu(false);
-        //inflater.inflate(R.menu.forecastfragment, menu);
+        inflater.inflate(R.menu.today, menu);
     }
 
     @Override
@@ -76,7 +73,7 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        switch (id) {
+        /*switch (id) {
             case R.id.action_refresh:
                 Log.d(LOG_TAG, "Triggering action {action_refresh}");
                 updateWeather();
@@ -86,7 +83,7 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
                 Log.d(LOG_TAG, "Triggering intent {Maps} to retrieve preferred location");
                 openPreferredLocationInMap();
                 break;
-        }
+        }*/
 
         return super.onOptionsItemSelected(item);
     }

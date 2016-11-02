@@ -5,6 +5,9 @@
     <string name="action_refresh" translatable="false">Refresh</string>
     <string name="action_map" translatable="false">Map Location</string>
     <string name="action_share">Share</string>
+    <string name="action_cities">Cities</string>
+    <string name="action_city_remove">Delete</string>
+    <string name="action_city_add">Add</string>
 
     <!-- Titles -->
     <string name="app_name">Sunshine</string>
