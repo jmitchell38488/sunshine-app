@@ -2,12 +2,17 @@ package com.example.android.sunshine.app;
 
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.widget.Toast;
+
+import com.example.android.sunshine.app.util.Utility;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings.
@@ -30,6 +35,7 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
         bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_location_key)));
         bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_units_key)));
         bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_sync_frequency_key)));
+        bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_enable_gps_location_key)));
     }
 
     /**
@@ -53,7 +59,18 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
     public boolean onPreferenceChange(Preference preference, Object value) {
         String stringValue = value.toString();
 
-        if (preference instanceof ListPreference) {
+        if (preference.getKey().equals(getString(R.string.pref_enable_gps_location_key))) {
+            // Do some UI validation
+            boolean gpsEnabled = (Boolean) value;
+
+            if (!gpsEnabled) {
+                preference.setSummary("");
+            } else {
+                Utility.checkLocationPermissions(this);
+                preference.setSummary("");
+            }
+
+        } else if (preference instanceof ListPreference) {
             // For list preferences, look up the correct display value in
             // the preference's 'entries' list (since they have separate labels/values).
             ListPreference listPreference = (ListPreference) preference;
@@ -65,6 +82,7 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
             // For other preferences, set the summary to the value's simple string representation.
             preference.setSummary(stringValue);
         }
+
         return true;
     }
 
@@ -72,6 +90,16 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
     @Override
     public Intent getParentActivityIntent() {
         return super.getParentActivityIntent().addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    }
+
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case Utility.PERMISSIONS_REQUEST_GPS:
+                if(grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    String s = "";
+                }
+                break;
+        }
     }
 
 }

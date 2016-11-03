@@ -32,6 +32,10 @@ public class Utility {
 
     private static final String LOG_TAG = Utility.class.getSimpleName();
 
+    public static final int PERMISSIONS_ALL = 1000;
+    public static final int PERMISSIONS_REQUEST_GPS = 1001;
+    public static final int PERMISSIONS_ACCESS_NETWORK_STATE = 1002;
+
     public static void showToast(Activity activity, String message, int duration) {
         Toast toast = Toast.makeText(activity, message, duration);
         toast.show();
@@ -156,7 +160,7 @@ public class Utility {
             } else {
                 ActivityCompat.requestPermissions(activity,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        MainActivity.PERMISSIONS_REQUEST_GPS);
+                        PERMISSIONS_REQUEST_GPS);
             }
         }
     }
@@ -174,7 +178,7 @@ public class Utility {
             } else {
                 ActivityCompat.requestPermissions(activity,
                         new String[]{Manifest.permission.ACCESS_NETWORK_STATE},
-                        MainActivity.PERMISSIONS_ACCESS_NETWORK_STATE);
+                        PERMISSIONS_ACCESS_NETWORK_STATE);
             }
         }
     }
@@ -191,7 +195,7 @@ public class Utility {
             } else {
                 ActivityCompat.requestPermissions(activity,
                         new String[]{Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.ACCESS_FINE_LOCATION},
-                        MainActivity.PERMISSIONS_ALL);
+                        PERMISSIONS_ALL);
             }
         }
     }

@@ -24,6 +24,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.android.sunshine.app.R;
+import com.example.android.sunshine.app.SettingsActivity;
 import com.example.android.sunshine.app.data.WeatherContract;
 import com.example.android.sunshine.app.data.model.LocationModel;
 import com.example.android.sunshine.app.sync.SunshineSyncAdapter;
@@ -80,8 +81,8 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        /*switch (id) {
-            case R.id.action_refresh:
+        switch (id) {
+            /*case R.id.action_refresh:
                 Log.d(LOG_TAG, "Triggering action {action_refresh}");
                 updateWeather();
                 return true;
@@ -89,8 +90,13 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
             case R.id.action_map:
                 Log.d(LOG_TAG, "Triggering intent {Maps} to retrieve preferred location");
                 openPreferredLocationInMap();
+                break;*/
+            case R.id.action_settings:
+                Log.d(LOG_TAG, "Triggering intent {SettingsActivity}");
+                Intent intent = new Intent(getActivity(), SettingsActivity.class);
+                startActivity(intent);
                 break;
-        }*/
+        }
 
         return super.onOptionsItemSelected(item);
     }

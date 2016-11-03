@@ -1,0 +1,3 @@
+adb server is out of date.  killing...
+* daemon started successfully *
+run-as: Could not set capabilities: Operation not permitted

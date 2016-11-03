@@ -46,6 +46,8 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
 
     private final String FORECAST_BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily";
     private final String CURRENT_CONDITIONS_BASE_URL = "http://api.openweathermap.org/data/2.5/weather";
+    private final String FIND_BASE_URL = "http://api.openweathermap.org/data/2.5/find";
+
     private final String QUERY_LAT = "lat";
     private final String QUERY_LON = "lon";
     private final String QUERY_PARAM = "q";
@@ -151,11 +153,11 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             CurrentConditionsModel currentModel = weatherParser.convertCurrentConditionsData();
             currentModel.setLocationId(locationId);
 
+            // Remove expired items from the data store
+            removeOldCurrentConditionsItems(locationId);
+
             // Save current conditions to the data store
             addCurrentCondition(currentModel);
-
-            // Remove expired items from the data store
-            //removeOldCurrentConditionsItems(locationId);
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
             e.printStackTrace();

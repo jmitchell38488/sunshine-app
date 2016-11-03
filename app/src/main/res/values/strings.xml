@@ -18,6 +18,7 @@
     <string name="title_activity_forecast">Forecast</string>
     <string name="title_activity_detail">Details</string>
     <string name="title_activity_settings">Settings</string>
+    <string name="title_activity_city">Locations</string>
 
     <!-- Preferences -->
     <string name="pref_location">Location</string>
@@ -135,4 +136,5 @@
     <!-- Notification Format -->
     <string name="format_notification">Forecast: <xliff:g id="condition">%1$s</xliff:g> High: <xliff:g id="high">%2$s</xliff:g> Low: <xliff:g id="low">%3$s</xliff:g></string>
     <string name="format_notification_current"><xliff:g id="location">%1$s</xliff:g> Currently <xliff:g id="c_temp">%2$s</xliff:g> <xliff:g id="c_condition">%3$s</xliff:g></string>
+
 </resources>
