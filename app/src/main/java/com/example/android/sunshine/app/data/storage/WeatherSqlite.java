@@ -14,12 +14,12 @@ import com.example.android.sunshine.app.util.Utility;
 /**
  * Created by justinmitchell on 27/10/2016.
  */
-
 public class WeatherSqlite implements IStorage {
 
     private WeatherDbHelper mOpenHelper;
 
     private static final SQLiteQueryBuilder sWeatherByLocationSettingQueryBuilder;
+    private static final SQLiteQueryBuilder sHourlyByLocationIdQueryBuilder;
 
     static {
         sWeatherByLocationSettingQueryBuilder = new SQLiteQueryBuilder();
@@ -42,36 +42,47 @@ public class WeatherSqlite implements IStorage {
                         " = " + WeatherContract.LocationEntry.TABLE_NAME +
                         "." + WeatherContract.LocationEntry._ID
         );
+
+        sHourlyByLocationIdQueryBuilder = new SQLiteQueryBuilder();
+
+        // hourly INNER JOIN location ON hourly.location_id = location._id
+        sHourlyByLocationIdQueryBuilder.setTables(
+                WeatherContract.HourlyForecastEntry.TABLE_NAME + " INNER JOIN " +
+                        WeatherContract.LocationEntry.TABLE_NAME +
+                        " ON " + WeatherContract.HourlyForecastEntry.TABLE_NAME +
+                        "." + WeatherContract.HourlyForecastEntry.COLUMN_LOC_KEY +
+                        " = " + WeatherContract.LocationEntry.TABLE_NAME +
+                        "." + WeatherContract.LocationEntry._ID
+        );
     }
 
-    private static final String sCurrentConditionsSelection =
-            WeatherContract.CurrentConditionsEntry.TABLE_NAME+
-                    "." + WeatherContract.CurrentConditionsEntry.COLUMN_LOC_KEY + " = ? ";
-
-    private static final String sLocationSettingSelection =
-            WeatherContract.LocationEntry.TABLE_NAME+
-                    "." + WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? ";
-
-    private static final String sLocationSettingWithStartDateSelection =
-            WeatherContract.LocationEntry.TABLE_NAME +
-                    "." + WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
-            WeatherContract.WeatherEntry.TABLE_NAME +
-                    "." + WeatherContract.WeatherEntry.COLUMN_DATE + " >= ? ";
-
-    private static final String sLocationIdWithStartDateSelection =
+    private static final String sWeatherByLocationIdWithStartDateSelection =
             WeatherContract.LocationEntry.TABLE_NAME +
                     "." + WeatherContract.LocationEntry.COLUMN_ID + " = ? AND " +
                     WeatherContract.WeatherEntry.TABLE_NAME +
                     "." + WeatherContract.WeatherEntry.COLUMN_DATE + " = ? ";
 
-    private static final String sLocationSettingAndDaySelection =
+    private static final String sLocationIdSelection =
             WeatherContract.LocationEntry.TABLE_NAME +
-                    "." + WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
-            WeatherContract.WeatherEntry.TABLE_NAME +
-                    "." + WeatherContract.WeatherEntry.COLUMN_DATE + " = ? ";
+                    "." + WeatherContract.LocationEntry.COLUMN_ID + " = ?";
 
-    public Cursor query(String[] projectionIn, String selection, String[] selectionArgs) {
+    private static final String sCurrentConditionsSelection =
+            WeatherContract.CurrentConditionsEntry.TABLE_NAME+
+                    "." + WeatherContract.CurrentConditionsEntry.COLUMN_LOC_KEY + " = ? ";
+
+    private static final String sHourlyIdSelection =
+            WeatherContract.HourlyForecastEntry.TABLE_NAME +
+                    "." + WeatherContract.HourlyForecastEntry.COLUMN_ID + " = ?";
+
+    private static final String sHourlyByLocationIdWithDateSelection =
+            WeatherContract.LocationEntry.TABLE_NAME +
+                    "." + WeatherContract.LocationEntry.COLUMN_ID + " = ? AND " +
+                    WeatherContract.HourlyForecastEntry.TABLE_NAME +
+                    "." + WeatherContract.HourlyForecastEntry.COLUMN_DATE + " = ? ";
+
+    public Cursor query(SQLiteQueryBuilder builder, String[] projectionIn, String selection, String[] selectionArgs) {
         return this.query(
+                builder,
                 projectionIn,
                 selection,
                 selectionArgs,
@@ -81,8 +92,8 @@ public class WeatherSqlite implements IStorage {
         );
     }
 
-    public Cursor query(String[] projectionIn, String selection, String[] selectionArgs, String groupBy, String having, String sortOrder) {
-        return sWeatherByLocationSettingQueryBuilder.query(
+    public Cursor query(SQLiteQueryBuilder builder, String[] projectionIn, String selection, String[] selectionArgs, String groupBy, String having, String sortOrder) {
+        return builder.query(
                 mOpenHelper.getReadableDatabase(),
                 projectionIn,
                 selection,
@@ -179,26 +190,6 @@ public class WeatherSqlite implements IStorage {
         return returnCount;
     }
 
-    public Cursor getCurrentConditionsWithLocationId(Uri uri, String[] projection, String sortOrder) {
-        long locationId = WeatherContract.CurrentConditionsEntry.getIdFromUri(uri);
-
-        String[] selectionArgs;
-        String selection;
-
-        selectionArgs = new String[]{Long.toString(locationId)};
-        selection = sCurrentConditionsSelection;
-
-        return this.query(
-                WeatherContract.CurrentConditionsEntry.TABLE_NAME,
-                projection,
-                selection,
-                selectionArgs,
-                null,
-                null,
-                sortOrder
-        );
-    }
-
     public Cursor getWeatherTodayByLocationId(Uri uri, String[] projection, String sortOrder) {
         long locationId = WeatherContract.WeatherEntry.getLocationIdFromUri(uri);
         long date = Utility.getMidnightTimeToday();
@@ -208,9 +199,10 @@ public class WeatherSqlite implements IStorage {
                 Long.toString(date)
         };
 
-        String selection = sLocationIdWithStartDateSelection;
+        String selection = sWeatherByLocationIdWithStartDateSelection;
 
         return this.query(
+                sWeatherByLocationSettingQueryBuilder,
                 projection,
                 selection,
                 selectionArgs,
@@ -220,60 +212,48 @@ public class WeatherSqlite implements IStorage {
         );
     }
 
-    public Cursor getWeatherTodayByLocationSetting(Uri uri, String[] projection, String sortOrder) {
-        String locationSetting = WeatherContract.WeatherEntry.getLocationSettingFromUri(uri);
-        long date = Utility.getMidnightTimeToday();
+    public Cursor getWeatherByLocationId(Uri uri, String[] projection, String sortOrder) {
+        long locationId = WeatherContract.WeatherEntry.getLocationIdFromUri(uri);
 
         String[] selectionArgs = new String[] {
-                locationSetting,
+                Long.toString(locationId),
+        };
+
+        String selection = sLocationIdSelection;
+
+        return this.query(
+                sWeatherByLocationSettingQueryBuilder,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
+    @Override
+    public Cursor getWeatherByLocationIdAndDate(Uri uri, String[] projection, String sortOrder) {
+        long locationId = WeatherContract.WeatherEntry.getLocationIdFromUri(uri);
+        long date = WeatherContract.WeatherEntry.getDateFromUri(uri);
+
+        // No date was returned
+        if (date == 0) {
+            return null;
+        }
+
+        String[] selectionArgs = new String[] {
+                Long.toString(locationId),
                 Long.toString(date)
         };
 
-        String selection = sLocationSettingWithStartDateSelection;
+        String selection = sWeatherByLocationIdWithStartDateSelection;
 
         return this.query(
+                sWeatherByLocationSettingQueryBuilder,
                 projection,
                 selection,
                 selectionArgs,
-                null,
-                null,
-                sortOrder
-        );
-    }
-
-    public Cursor getWeatherByLocationSetting(Uri uri, String[] projection, String sortOrder) {
-        String locationSetting = WeatherContract.WeatherEntry.getLocationSettingFromUri(uri);
-        long startDate = WeatherContract.WeatherEntry.getStartDateFromUri(uri);
-
-        String[] selectionArgs;
-        String selection;
-
-        if (startDate == 0) {
-            selection = sLocationSettingSelection;
-            selectionArgs = new String[]{locationSetting};
-        } else {
-            selectionArgs = new String[]{locationSetting, Long.toString(startDate)};
-            selection = sLocationSettingWithStartDateSelection;
-        }
-
-        return this.query(
-                projection,
-                selection,
-                selectionArgs,
-                null,
-                null,
-                sortOrder
-        );
-    }
-
-    public Cursor getWeatherByLocationSettingAndDate(Uri uri, String[] projection, String sortOrder) {
-        String locationSetting = WeatherContract.WeatherEntry.getLocationSettingFromUri(uri);
-        long date = WeatherContract.WeatherEntry.getDateFromUri(uri);
-
-        return this.query(
-                projection,
-                sLocationSettingAndDaySelection,
-                new String[]{locationSetting, Long.toString(date)},
                 null,
                 null,
                 sortOrder
@@ -307,6 +287,117 @@ public class WeatherSqlite implements IStorage {
     public Cursor getCurrentConditions(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         return this.query(
                 WeatherContract.CurrentConditionsEntry.TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
+    public Cursor getCurrentConditionsWithLocationId(Uri uri, String[] projection, String sortOrder) {
+        long locationId = WeatherContract.CurrentConditionsEntry.getIdFromUri(uri);
+
+        String[] selectionArgs = new String[]{
+                Long.toString(locationId)
+        };
+
+        String selection = sCurrentConditionsSelection;
+
+        return this.query(
+                WeatherContract.CurrentConditionsEntry.TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
+    @Override
+    public Cursor getHourly(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        return this.query(
+                WeatherContract.HourlyForecastEntry.TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
+    @Override
+    public Cursor getHourlyWithId(Uri uri,  String[] projection, String sortOrder) {
+        long id = WeatherContract.HourlyForecastEntry.getIdFromUri(uri);
+
+        // No date was returned
+        if (id == 0) {
+            return null;
+        }
+
+        String[] selectionArgs = new String[] {
+                Long.toString(id)
+        };
+
+        String selection = sHourlyIdSelection;
+
+        return this.query(
+                WeatherContract.HourlyForecastEntry.TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
+    @Override
+    public Cursor getHourlyByLocationId(Uri uri, String[] projection, String sortOrder) {
+        long locationId = WeatherContract.HourlyForecastEntry.getLocationIdFromUri(uri);
+
+        if (locationId == 0) {
+            return null;
+        }
+
+        String[] selectionArgs = new String[] {
+                Long.toString(locationId),
+        };
+
+        String selection = sLocationIdSelection;
+
+        return this.query(
+                sWeatherByLocationSettingQueryBuilder,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
+    @Override
+    public Cursor getHourlyByLocationIdAndDate(Uri uri, String[] projection, String sortOrder) {
+        long locationId = WeatherContract.HourlyForecastEntry.getLocationIdFromUri(uri);
+        long date = WeatherContract.HourlyForecastEntry.getDateFromUri(uri);
+
+        if (locationId == 0 || date == 0) {
+            return null;
+        }
+
+        String[] selectionArgs = new String[] {
+                Long.toString(locationId),
+                Long.toString(date),
+        };
+
+        String selection = sHourlyByLocationIdWithDateSelection;
+
+        return this.query(
+                sWeatherByLocationSettingQueryBuilder,
                 projection,
                 selection,
                 selectionArgs,

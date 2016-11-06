@@ -12,21 +12,27 @@ import com.example.android.sunshine.app.data.WeatherContract;
 
 public interface IStorage {
 
-    public Cursor getWeatherByLocationSetting(Uri uri, String[] projection, String sortOrder);
+    public Cursor getWeather(String[] projection, String selection, String[] selectionArgs, String sortOrder);
 
-    public Cursor getWeatherByLocationSettingAndDate(Uri uri, String[] projection, String sortOrder);
+    public Cursor getWeatherByLocationId(Uri uri, String[] projection, String sortOrder);
+
+    public Cursor getWeatherByLocationIdAndDate(Uri uri, String[] projection, String sortOrder);
 
     public Cursor getWeatherTodayByLocationId(Uri uri, String[] projection, String sortOrder);
-
-    public Cursor getWeatherTodayByLocationSetting(Uri uri, String[] projection, String sortOrder);
-
-    public Cursor getWeather(String[] projection, String selection, String[] selectionArgs, String sortOrder);
 
     public Cursor getLocation(String[] projection, String selection, String[] selectionArgs, String sortOrder);
 
     public Cursor getCurrentConditions(String[] projection, String selection, String[] selectionArgs, String sortOrder);
 
     public Cursor getCurrentConditionsWithLocationId(Uri uri, String[] projection, String sortOrder);
+
+    public Cursor getHourly(String[] projection, String selection, String[] selectionArgs, String sortOrder);
+
+    public Cursor getHourlyWithId(Uri uri,  String[] projection, String sortOrder);
+
+    public Cursor getHourlyByLocationId(Uri uri, String[] projection, String sortOrder);
+
+    public Cursor getHourlyByLocationIdAndDate(Uri uri, String[] projection, String sortOrder);
 
     public StorageType getType();
 
