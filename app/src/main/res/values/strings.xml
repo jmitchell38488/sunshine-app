@@ -45,9 +45,9 @@
 
     <!-- Strings related to Use GPS preference -->
     <string name="pref_enable_gps_location_key" translatable="false">enable_gps_position</string>
-    <string name="pref_enable_gps_location_label">Use GPS as preferred location</string>
-    <string name="pref_enable_gps_location_true">Using GPS</string>
-    <string name="pref_enable_gps_location_false">Using Preferred</string>
+    <string name="pref_enable_gps_location_label">Use GPS to determine device location</string>
+    <string name="pref_enable_gps_location_true">Using GPS location</string>
+    <string name="pref_enable_gps_location_false">Using network location</string>
     <string name="pref_enable_gps_location_default" translatable="false">false</string>
 
     <!-- Preference Category Headings -->

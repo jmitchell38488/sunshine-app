@@ -12,29 +12,23 @@ import com.example.android.sunshine.app.R;
 
 public class Preferences {
 
-    private static final String SP_DEFAULT = "default";
-    private static final String SP_COUNT = "countpref";
+    public static final String SP_DEFAULT = "default";
+    public static final String SP_COUNT = "countpref";
 
     public static String getSyncFrequency(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences prefs = context.getSharedPreferences(SP_DEFAULT, Context.MODE_PRIVATE);
         return prefs.getString(context.getString(R.string.pref_sync_frequency_key),
                 context.getString(R.string.pref_sync_frequency_default));
     }
 
-    public static String getPreferredLocation(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        return prefs.getString(context.getString(R.string.pref_location_key),
-                context.getString(R.string.pref_location_default));
-    }
-
     public static String getUnitType(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences prefs = context.getSharedPreferences(SP_DEFAULT, Context.MODE_PRIVATE);
         return prefs.getString(context.getString(R.string.pref_units_key),
                 context.getString(R.string.pref_units_metric));
     }
 
     public static long getLastUsedLocation(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences prefs = context.getSharedPreferences(SP_DEFAULT, Context.MODE_PRIVATE);
         long def = Long.parseLong(context.getString(R.string.pref_last_used_location_default));
         long lastLocation = prefs.getLong(context.getString(R.string.pref_last_used_location_key), def);
 
@@ -42,14 +36,14 @@ public class Preferences {
     }
 
     public static void setLastUsedLocation(Context context, long locationId) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences prefs = context.getSharedPreferences(SP_DEFAULT, Context.MODE_PRIVATE);
         SharedPreferences.Editor spe = prefs.edit();
         spe.putLong(context.getString(R.string.pref_last_used_location_key), locationId);
         spe.commit();
     }
 
     public static boolean userDisplayNotifications(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences prefs = context.getSharedPreferences(SP_DEFAULT, Context.MODE_PRIVATE);
         String displayNotificationsKey = context.getString(R.string.pref_enable_notifications_key);
 
         boolean displayNotifications = prefs.getBoolean(displayNotificationsKey,
@@ -59,7 +53,7 @@ public class Preferences {
     }
 
     public static boolean usePreferredLocation(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences prefs = context.getSharedPreferences(SP_DEFAULT, Context.MODE_PRIVATE);
         String usePreferredKey = context.getString(R.string.pref_enable_gps_location_key);
 
         boolean usePreferred = prefs.getBoolean(usePreferredKey,

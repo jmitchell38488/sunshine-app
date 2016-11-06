@@ -24,13 +24,6 @@
     <PreferenceCategory
         android:title="@string/pref_settings_sync_preferences"
         android:key="pref_key_sync_settings">
-        <EditTextPreference
-            android:title="@string/pref_location"
-            android:key="@string/pref_location_key"
-            android:defaultValue="@string/pref_location_default"
-            android:inputType="text"
-            android:singleLine="true" />
-
         <SwitchPreference
             android:title="@string/pref_enable_gps_location_label"
             android:key="@string/pref_enable_gps_location_key"
