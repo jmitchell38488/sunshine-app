@@ -22,13 +22,16 @@ public class WeatherProvider extends ContentProvider {
     private IStorage weatherStorage;
 
     static final int WEATHER = 100;
-    static final int WEATHER_WITH_LOCATION = 101;
-    static final int WEATHER_WITH_LOCATION_AND_DATE = 102;
-    static final int WEATHER_WITH_LOCATIONID_TODAY = 103;
-    static final int WEATHER_WITH_LOCATIONSETTING_TODAY = 104;
+    static final int WEATHER_WITH_LOCATION_ID = 101;
+    static final int WEATHER_WITH_LOCATION_ID_AND_DATE = 102;
+    static final int WEATHER_WITH_LOCATION_ID_TODAY = 103;
     static final int LOCATION = 300;
-    static final int CURRENT_CONDITIONS = 400;
-    static final int CURRENT_WITH_ID = 401;
+    static final int CURRENT = 400;
+    static final int CURRENT_WITH_LOCATION_ID = 401;
+    static final int HOURLY = 500;
+    static final int HOURLY_WITH_ID = 501;
+    static final int HOURLY_WITH_LOCATION_ID = 502;
+    static final int HOURLY_WITH_LOCATION_ID_AND_DATE = 503;
 
     @Override
     public boolean onCreate() {
@@ -50,52 +53,59 @@ public class WeatherProvider extends ContentProvider {
         switch (sUriMatcher.match(uri)) {
 
             // "weather/#/today"
-            case WEATHER_WITH_LOCATIONID_TODAY: {
+            case WEATHER_WITH_LOCATION_ID_TODAY:
                 retCursor = weatherStorage.getWeatherTodayByLocationId(uri, projection, sortOrder);
                 break;
-            }
 
-            // "weather/*/today"
-            case WEATHER_WITH_LOCATIONSETTING_TODAY: {
-                retCursor = weatherStorage.getWeatherTodayByLocationSetting(uri, projection, sortOrder);
+            // weather/#/#
+            case WEATHER_WITH_LOCATION_ID_AND_DATE:
+                retCursor = weatherStorage.getWeatherByLocationIdAndDate(uri, projection, sortOrder);
                 break;
-            }
 
-            // "weather/*/*"
-            case WEATHER_WITH_LOCATION_AND_DATE: {
-                retCursor = weatherStorage.getWeatherByLocationSettingAndDate(uri, projection, sortOrder);
+            // weather/#
+            case WEATHER_WITH_LOCATION_ID:
+                retCursor = weatherStorage.getWeatherByLocationId(uri, projection, sortOrder);
                 break;
-            }
 
-            // "weather/*"
-            case WEATHER_WITH_LOCATION: {
-                retCursor = weatherStorage.getWeatherByLocationSetting(uri, projection, sortOrder);
-                break;
-            }
-
-            // "weather"
-            case WEATHER: {
+            // "weather/"
+            case WEATHER:
                 retCursor = weatherStorage.getWeather(projection, selection, selectionArgs, sortOrder);
                 break;
-            }
 
-            // "location"
-            case LOCATION: {
+            // "location/"
+            case LOCATION:
                 retCursor = weatherStorage.getLocation(projection, selection, selectionArgs, sortOrder);
                 break;
-            }
 
-            // "current"
-            case CURRENT_CONDITIONS: {
+            // "current/"
+            case CURRENT:
                 retCursor = weatherStorage.getCurrentConditions(projection, selection, selectionArgs, sortOrder);
                 break;
-            }
 
-            // "current"
-            case CURRENT_WITH_ID: {
+            // "current/#"
+            case CURRENT_WITH_LOCATION_ID:
                 retCursor = weatherStorage.getCurrentConditionsWithLocationId(uri, projection, sortOrder);
                 break;
-            }
+
+            // "hourly/"
+            case HOURLY:
+                retCursor = weatherStorage.getHourly(projection, selection, selectionArgs, sortOrder);
+                break;
+
+            // "hourly/#"
+            case HOURLY_WITH_ID:
+                retCursor = weatherStorage.getCurrentConditionsWithLocationId(uri, projection, sortOrder);
+                break;
+
+            // "hourly/location/#"
+            case HOURLY_WITH_LOCATION_ID:
+                retCursor = weatherStorage.getHourlyByLocationId(uri, projection, sortOrder);
+                break;
+
+            // "hourly/location/#/#"
+            case HOURLY_WITH_LOCATION_ID_AND_DATE:
+                retCursor = weatherStorage.getHourlyByLocationIdAndDate(uri, projection, sortOrder);
+                break;
 
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -136,11 +146,23 @@ public class WeatherProvider extends ContentProvider {
                 break;
             }
 
-            case CURRENT_CONDITIONS: {
+            case CURRENT: {
                 long id = weatherStorage.insert(WeatherContract.CurrentConditionsEntry.TABLE_NAME, contentValues);
 
                 if (id > 0) {
                     returnUri = WeatherContract.CurrentConditionsEntry.buildCurrentConditionsUri(id);
+                } else {
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                }
+
+                break;
+            }
+
+            case HOURLY: {
+                long id = weatherStorage.insert(WeatherContract.HourlyForecastEntry.TABLE_NAME, contentValues);
+
+                if (id > 0) {
+                    returnUri = WeatherContract.HourlyForecastEntry.buildHourlyForecastUri(id);
                 } else {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 }
@@ -175,8 +197,12 @@ public class WeatherProvider extends ContentProvider {
                 rowsDeleted = weatherStorage.delete(WeatherContract.LocationEntry.TABLE_NAME, selection, selectionArgs);
                 break;
 
-            case CURRENT_CONDITIONS:
+            case CURRENT:
                 rowsDeleted = weatherStorage.delete(WeatherContract.CurrentConditionsEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+
+            case HOURLY:
+                rowsDeleted = weatherStorage.delete(WeatherContract.HourlyForecastEntry.TABLE_NAME, selection, selectionArgs);
                 break;
 
             default:
@@ -205,8 +231,12 @@ public class WeatherProvider extends ContentProvider {
                 rowsUpdated = weatherStorage.update(WeatherContract.LocationEntry.TABLE_NAME, values, selection, selectionArgs);
                 break;
 
-            case CURRENT_CONDITIONS:
+            case CURRENT:
                 rowsUpdated = weatherStorage.update(WeatherContract.CurrentConditionsEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
+
+            case HOURLY:
+                rowsUpdated = weatherStorage.update(WeatherContract.HourlyForecastEntry.TABLE_NAME, values, selection, selectionArgs);
                 break;
 
             default:
@@ -231,8 +261,13 @@ public class WeatherProvider extends ContentProvider {
                 getContext().getContentResolver().notifyChange(uri, null);
                 return returnCount;
 
-            case CURRENT_CONDITIONS:
+            case CURRENT:
                 returnCount = weatherStorage.bulkInsert(WeatherContract.CurrentConditionsEntry.TABLE_NAME, values);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return returnCount;
+
+            case HOURLY:
+                returnCount = weatherStorage.bulkInsert(WeatherContract.HourlyForecastEntry.TABLE_NAME, values);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return returnCount;
 
@@ -256,22 +291,31 @@ public class WeatherProvider extends ContentProvider {
         final int match = sUriMatcher.match(uri);
 
         switch (match) {
-            case WEATHER_WITH_LOCATIONID_TODAY:
+            case WEATHER_WITH_LOCATION_ID_AND_DATE:
+            case WEATHER_WITH_LOCATION_ID_TODAY:
                 return WeatherContract.WeatherEntry.CONTENT_ITEM_TYPE;
-            case WEATHER_WITH_LOCATIONSETTING_TODAY:
-                return WeatherContract.WeatherEntry.CONTENT_ITEM_TYPE;
-            case WEATHER_WITH_LOCATION_AND_DATE:
-                return WeatherContract.WeatherEntry.CONTENT_ITEM_TYPE;
-            case WEATHER_WITH_LOCATION:
-                return WeatherContract.WeatherEntry.CONTENT_TYPE;
+
             case WEATHER:
+            case WEATHER_WITH_LOCATION_ID:
                 return WeatherContract.WeatherEntry.CONTENT_TYPE;
+
             case LOCATION:
                 return WeatherContract.LocationEntry.CONTENT_TYPE;
-            case CURRENT_CONDITIONS:
+
+            case CURRENT:
                 return WeatherContract.CurrentConditionsEntry.CONTENT_TYPE;
-            case CURRENT_WITH_ID:
-                return WeatherContract.CurrentConditionsEntry.CONTENT_TYPE;
+
+            case CURRENT_WITH_LOCATION_ID:
+                return WeatherContract.CurrentConditionsEntry.CONTENT_ITEM_TYPE;
+
+            case HOURLY:
+            case HOURLY_WITH_LOCATION_ID:
+                return WeatherContract.HourlyForecastEntry.CONTENT_TYPE;
+
+            case HOURLY_WITH_ID:
+            case HOURLY_WITH_LOCATION_ID_AND_DATE:
+                return WeatherContract.HourlyForecastEntry.CONTENT_ITEM_TYPE;
+
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -296,25 +340,32 @@ public class WeatherProvider extends ContentProvider {
         matcher.addURI(authority, WeatherContract.PATH_WEATHER, WEATHER);
 
         // Match weather with any string (eg /weather/3059,au)
-        matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*", WEATHER_WITH_LOCATION);
+        matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*", WEATHER_WITH_LOCATION_ID);
 
         // Match weather with location id and today (eg /weather/1/today)
-        matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/#/today", WEATHER_WITH_LOCATIONSETTING_TODAY);
-
-        // Match weather with location setting and today (eg /weather/3059,au/today)
-        matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*/today", WEATHER_WITH_LOCATIONID_TODAY);
-
-        // Match weather with location setting and date (eg /weather/3059,au/111111111)
-        matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/*/#", WEATHER_WITH_LOCATION_AND_DATE);
+        matcher.addURI(authority, WeatherContract.PATH_WEATHER + "/#/today", WEATHER_WITH_LOCATION_ID_TODAY);
 
         // Match location (eg /location)
         matcher.addURI(authority, WeatherContract.PATH_LOCATION, LOCATION);
 
         // Match current conditions (eg /current)
-        matcher.addURI(authority, WeatherContract.PATH_CURRENT, CURRENT_CONDITIONS);
+        matcher.addURI(authority, WeatherContract.PATH_CURRENT, CURRENT);
 
         // Match current conditions with location id (/current/1)
-        matcher.addURI(authority, WeatherContract.PATH_CURRENT + "/#", CURRENT_WITH_ID);
+        matcher.addURI(authority, WeatherContract.PATH_CURRENT + "/#", CURRENT_WITH_LOCATION_ID);
+
+        // Match hourly conditions (/hourly)
+        matcher.addURI(authority, WeatherContract.PATH_HOURLY, HOURLY);
+
+        // Match hourly conditions (/hourly/1)
+        matcher.addURI(authority, WeatherContract.PATH_HOURLY + "/#", HOURLY_WITH_ID);
+
+        // Match hourly conditions with location id (/hourly/location/1)
+        matcher.addURI(authority, WeatherContract.PATH_HOURLY + "/location/#", HOURLY_WITH_LOCATION_ID);
+
+        // Match hourly conditions with location id and date (/hourly/location/1/12345)
+        matcher.addURI(authority, WeatherContract.PATH_HOURLY + "/location/#/#", HOURLY_WITH_LOCATION_ID_AND_DATE);
+
         return matcher;
     }
 
