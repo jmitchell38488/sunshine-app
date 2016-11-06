@@ -135,12 +135,12 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 // if it cannot seek to that position.
                 Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
                 if (cursor != null) {
-                    String locationSetting = Preferences.getPreferredLocation(getActivity());
-                    ((Callback) getActivity()).onItemSelected(
+                    //String locationSetting = Preferences.getPreferredLocation(getActivity());
+                    /*((Callback) getActivity()).onItemSelected(
                             WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
                                     locationSetting, cursor.getLong(WeatherContract.COL_WEATHER_DATE)
                             )
-                    );
+                    );*/
                 }
 
                 // Set the position
@@ -166,7 +166,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        getLoaderManager().initLoader(FORECAST_LOADER, null, this);
+        //getLoaderManager().initLoader(FORECAST_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
     }
 
@@ -178,7 +178,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         // To only show current and future dates, filter the query to return weather only for
         // dates after or including today.
 
-        String locationSetting = Preferences.getPreferredLocation(getActivity());
+    /*    String locationSetting = Preferences.getPreferredLocation(getActivity());
 
         // Sort order:  Ascending, by date.
         String sortOrder = WeatherContract.WeatherEntry.TABLE_NAME + "."
@@ -192,7 +192,8 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 WeatherContract.FORECAST_COLUMNS,
                 null,
                 null,
-                sortOrder);
+                sortOrder);*/
+        return null;
     }
 
     @Override

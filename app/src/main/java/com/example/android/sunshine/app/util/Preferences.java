@@ -35,6 +35,14 @@ public class Preferences {
         return lastLocation;
     }
 
+    public static boolean getUseGpsForLocation(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(SP_DEFAULT, Context.MODE_PRIVATE);
+        boolean def = Boolean.parseBoolean(context.getString(R.string.pref_enable_gps_location_default));
+        boolean useGps = prefs.getBoolean(context.getString(R.string.pref_enable_gps_location_key), def);
+
+        return useGps;
+    }
+
     public static void setLastUsedLocation(Context context, long locationId) {
         SharedPreferences prefs = context.getSharedPreferences(SP_DEFAULT, Context.MODE_PRIVATE);
         SharedPreferences.Editor spe = prefs.edit();

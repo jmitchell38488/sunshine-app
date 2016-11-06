@@ -181,17 +181,4 @@ public class DetailFragment extends Fragment implements LoaderCallbacks<Cursor> 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) { }
 
-    public void onLocationChanged(String newLocation) {
-        Uri uri = mUri;
-
-        if (uri == null) {
-            return;
-        }
-
-        long date = WeatherContract.WeatherEntry.getDateFromUri(uri);
-        Uri updatedUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(newLocation, date);
-        mUri = updatedUri;
-        getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
-    }
-
 }

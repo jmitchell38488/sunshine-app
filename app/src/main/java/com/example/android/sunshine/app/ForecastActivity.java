@@ -27,7 +27,7 @@ public class ForecastActivity extends AppCompatActivity implements ForecastFragm
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_forecast);
 
-        mLocation = Preferences.getPreferredLocation(this);
+        //mLocation = Preferences.getPreferredLocation(this);
 
         if (findViewById(R.id.weather_detail_container) != null) {
             // The detail container view will be present only in the large-screen layouts
@@ -95,7 +95,8 @@ public class ForecastActivity extends AppCompatActivity implements ForecastFragm
     @Override
     protected void onResume() {
         super.onResume();
-        String location = Preferences.getPreferredLocation(this);
+        String location = null;
+        //String location = Preferences.getPreferredLocation(this);
 
         // Trigger an onLocationChanged() action in the ForecastFragment if the location string is changed
         if (location != null && !location.equals(mLocation)) {
@@ -106,7 +107,7 @@ public class ForecastActivity extends AppCompatActivity implements ForecastFragm
 
             DetailFragment df = (DetailFragment) getSupportFragmentManager().findFragmentByTag(DETAILFRAGMENT_TAG);
             if (df != null) {
-                df.onLocationChanged(location);
+                //df.onLocationChanged(location);
             }
 
             mLocation = location;

@@ -58,8 +58,15 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         Utility.hideStatusBar(getActivity());
 
         long lastLocationId = Preferences.getLastUsedLocation(getActivity());
+
+        // We haven't initialized a location yet, freshly installed?
+        if (lastLocationId == 0) {
+            Utility.getCurrentLocation(getActivity(), Preferences.getUseGpsForLocation(getActivity()));
+
+        }
+
         if (lastLocationId > 0) {
-            mUri = WeatherContract.WeatherEntry.buildWeatherLocationIdToday(lastLocationId);
+            mUri = WeatherContract.WeatherEntry.buildWeatherTodayWithLocationId(lastLocationId);
             Log.d(LOG_TAG, mUri.toString());
 
             long todayDateTime = Preferences.getTodayDateTime(getActivity());
@@ -155,6 +162,13 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         TodayViewHolder viewHolder = new TodayViewHolder(view);
         view.setTag(viewHolder);
 
+        Location location = Utility.getCurrentLocation(getActivity(), false);
+        if (location != null) {
+            TextView coords = (TextView) getView().findViewById(R.id.today_gps_coords);
+            String s = "lat (" + location.getLatitude() + ") lon (" + location.getLongitude() + ")";
+            coords.setText(s);
+        }
+
         return view;
     }
 
@@ -209,8 +223,8 @@ public class TodayFragment extends Fragment implements LoaderManager.LoaderCallb
         }
 
         long date = WeatherContract.WeatherEntry.getDateFromUri(uri);
-        Uri updatedUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(newLocation, date);
-        mUri = updatedUri;
+        //Uri updatedUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(newLocation, date);
+        //mUri = updatedUri;
         getLoaderManager().restartLoader(TODAY_LOADER, null, this);
     }
 

@@ -111,7 +111,12 @@ public class Utility {
         return -1;
     }
 
+    public static Location getCurrentLocation(Context context, boolean useGps) throws SecurityException {
+        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
+        return lastKnownLocation;
+    }
 
     /**
      * Method to fetch the best last location from either the GPS or Network Provider

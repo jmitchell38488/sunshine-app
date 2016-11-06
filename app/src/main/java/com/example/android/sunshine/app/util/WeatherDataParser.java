@@ -90,6 +90,7 @@ public class WeatherDataParser {
 
     public LocationModel convertLocationData(String locationSetting) throws JSONException {
         final String OWM_CITY = "city";
+        final String OWM_COUNTRY = "country";
         final String OWM_COORD = "coord";
 
         final String OWM_ID = "id";
@@ -102,11 +103,11 @@ public class WeatherDataParser {
 
         LocationModel model = new LocationModel();
 
-        model.setId(location.getInt(OWM_ID));
+        model.setLocationId(location.getLong(OWM_ID));
         model.setCityName(location.getString(OWM_CITY_NAME));
+        model.setCountryName(location.getString(OWM_COUNTRY));
         model.setCoordLat(coords.getDouble(OWM_COORD_LAT));
         model.setCoordLon(coords.getDouble(OWM_COORD_LON));
-        model.setLocationSetting(locationSetting);
 
         return model;
     }

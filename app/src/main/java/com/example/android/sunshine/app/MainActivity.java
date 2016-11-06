@@ -42,8 +42,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        TodayFragment tf = (TodayFragment) getSupportFragmentManager().findFragmentById(R.id.today_detail_container);
-        tf.refreshLoader();
+        //TodayFragment tf = (TodayFragment) getSupportFragmentManager().findFragmentById(R.id.today_detail_container);
+        //tf.refreshLoader();
     }
 
 }
