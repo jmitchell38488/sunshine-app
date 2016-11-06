@@ -22,16 +22,7 @@ public class WeatherContract {
     public static final String PATH_WEATHER = "weather";
     public static final String PATH_LOCATION = "location";
     public static final String PATH_CURRENT = "current";
-
-    // To make it easy to query for the exact date, we normalize all dates that go into
-    // the database to the start of the the Julian day at UTC.
-    public static long normalizeDate(long startDate) {
-        // normalize the start date to the beginning of the (UTC) day
-        Time time = new Time();
-        time.set(startDate);
-        int julianDay = Time.getJulianDay(startDate, time.gmtoff);
-        return time.setJulianDay(julianDay);
-    }
+    public static final String PATH_HOURLY = "hourly";
 
     public static final String[] FORECAST_COLUMNS = {
             WeatherEntry.TABLE_NAME + "." + WeatherEntry._ID,
@@ -170,6 +161,126 @@ public class WeatherContract {
         }
     }
 
+    public static final class HourlyForecastEntry implements BaseColumns {
+
+        public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_CURRENT).build();
+
+        public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_HOURLY;
+        public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_HOURLY;
+
+        public static final String TABLE_NAME = "hourly";
+
+        public static final String COLUMN_ID = "_id";
+        public static final String COLUMN_LOC_KEY = "location_id";
+        public static final String COLUMN_DATE = "date";
+        public static final String COLUMN_WEATHER_ID = "weather_id";
+        public static final String COLUMN_SHORT_DESC = "short_desc";
+        public static final String COLUMN_CUR_TEMP = "temp";
+        public static final String COLUMN_MIN_TEMP = "min";
+        public static final String COLUMN_MAX_TEMP = "max";
+        public static final String COLUMN_HUMIDITY = "humidity";
+        public static final String COLUMN_PRESSURE = "pressure";
+        public static final String COLUMN_WIND_SPEED = "wind";
+        public static final String COLUMN_DEGREES = "degrees";
+
+        public static final String[] FORECAST_COLUMNS = {
+                WeatherContract.HourlyForecastEntry.COLUMN_ID,
+                WeatherContract.HourlyForecastEntry.COLUMN_LOC_KEY,
+                WeatherContract.HourlyForecastEntry.COLUMN_WEATHER_ID,
+                WeatherContract.HourlyForecastEntry.COLUMN_DATE,
+                WeatherContract.HourlyForecastEntry.COLUMN_SHORT_DESC,
+                WeatherContract.HourlyForecastEntry.COLUMN_CUR_TEMP,
+                WeatherContract.HourlyForecastEntry.COLUMN_MIN_TEMP,
+                WeatherContract.HourlyForecastEntry.COLUMN_MAX_TEMP,
+                WeatherContract.HourlyForecastEntry.COLUMN_HUMIDITY,
+                WeatherContract.HourlyForecastEntry.COLUMN_PRESSURE,
+                WeatherContract.HourlyForecastEntry.COLUMN_WIND_SPEED,
+                WeatherContract.HourlyForecastEntry.COLUMN_DEGREES
+        };
+
+        public static final int COL_ID = 0;
+        public static final int COL_LOC_KEY = 1;
+        public static final int COL_WEATHER_ID = 2;
+        public static final int COL_DATE = 3;
+        public static final int COL_SHORT_DESC = 4;
+        public static final int COL_CUR_TEMP = 5;
+        public static final int COL_MIN_TEMP = 6;
+        public static final int COL_MAX_TEMP = 7;
+        public static final int COL_HUMIDITY = 8;
+        public static final int COL_PRESSURE = 9;
+        public static final int COL_WIND_SPEED = 10;
+        public static final int COL_DEGREES = 11;
+
+        public static Uri buildHourlyForecastUri(long forecastId) {
+            return ContentUris.withAppendedId(CONTENT_URI, forecastId);
+        }
+
+        /**
+         * Helper method to fetch the hourly weather conditions based on a location id.
+         * @param locationId
+         * @return
+         */
+        public static Uri buildHourlyForecastFromLocationIdUri(long locationId) {
+            return CONTENT_URI.buildUpon()
+                    .appendPath("location")
+                    .appendPath(Long.toString(locationId))
+                    .build();
+        }
+
+        public static Uri buildHourlyForecastFromLocationWithDateUri(long locationId, long dateTime) {
+            return CONTENT_URI.buildUpon()
+                    .appendPath("location")
+                    .appendPath(Long.toString(locationId))
+                    .appendPath(Long.toString(dateTime))
+                    .build();
+        }
+
+        public static long getIdFromUri(Uri uri) {
+            if (uri.getPathSegments().isEmpty()) {
+                return 0l;
+            }
+
+            String id = uri.getPathSegments().get(1);
+
+            try {
+                Long l = Long.parseLong(id);
+                return l;
+            } catch (NumberFormatException nfe) {
+                return 0l;
+            }
+        }
+
+        public static long getLocationIdFromUri(Uri uri) {
+            if (uri.getPathSegments().isEmpty() || uri.getPathSegments().size() < 3) {
+                return 0l;
+            }
+
+            String id = uri.getPathSegments().get(3);
+
+            try {
+                Long l = Long.parseLong(id);
+                return l;
+            } catch (NumberFormatException nfe) {
+                return 0l;
+            }
+        }
+
+        public static long getDateFromUri(Uri uri) {
+            if (uri.getPathSegments().isEmpty() || uri.getPathSegments().size() < 4) {
+                return 0l;
+            }
+
+            String id = uri.getPathSegments().get(4);
+
+            try {
+                Long l = Long.parseLong(id);
+                return l;
+            } catch (NumberFormatException nfe) {
+                return 0l;
+            }
+        }
+    }
+
     /* Inner class that defines the table contents of the weather table */
     public static final class WeatherEntry implements BaseColumns {
 
@@ -216,29 +327,6 @@ public class WeatherContract {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
-        public static Uri buildWeatherLocation(String locationSetting) {
-            return CONTENT_URI.buildUpon().appendPath(locationSetting).build();
-        }
-
-        public static Uri buildWeatherLocationIdToday(long locationId) {
-            return CONTENT_URI.buildUpon()
-                    .appendPath(Long.toString(locationId))
-                    .appendPath("today")
-                    .build();
-        }
-
-        public static Uri buildWeatherLocationWithStartDate(
-                String locationSetting, long startDate) {
-            long normalizedDate = normalizeDate(startDate);
-            return CONTENT_URI.buildUpon().appendPath(locationSetting)
-                    .appendQueryParameter(COLUMN_DATE, Long.toString(normalizedDate)).build();
-        }
-
-        public static Uri buildWeatherLocationWithDate(String locationSetting, long date) {
-            return CONTENT_URI.buildUpon().appendPath(locationSetting)
-                    .appendPath(Long.toString(normalizeDate(date))).build();
-        }
-
         public static Uri buildWeatherLocationIdWithDate(long locationId, long timestamp) {
             return CONTENT_URI.buildUpon()
                     .appendPath(Long.toString(locationId))
@@ -246,22 +334,11 @@ public class WeatherContract {
                     .build();
         }
 
-        public static Uri buildWeatherToday(long locationId) {
+        public static Uri buildWeatherTodayWithLocationId(long locationId) {
             return CONTENT_URI.buildUpon()
                     .appendPath(Long.toString(locationId))
                     .appendPath("today")
                     .build();
-        }
-
-        public static Uri buildWeatherToday(String locationSetting) {
-            return CONTENT_URI.buildUpon()
-                    .appendPath(locationSetting)
-                    .appendPath("today")
-                    .build();
-        }
-
-        public static String getLocationSettingFromUri(Uri uri) {
-            return uri.getPathSegments().get(1);
         }
 
         public static long getLocationIdFromUri(Uri uri) {
@@ -269,15 +346,14 @@ public class WeatherContract {
         }
 
         public static long getDateFromUri(Uri uri) {
-            return Long.parseLong(uri.getPathSegments().get(2));
-        }
+            String segment = uri.getPathSegments().get(2);
 
-        public static long getStartDateFromUri(Uri uri) {
-            String dateString = uri.getQueryParameter(COLUMN_DATE);
-            if (null != dateString && dateString.length() > 0)
-                return Long.parseLong(dateString);
-            else
-                return 0;
+            try {
+                Long date = Long.parseLong(segment);
+                return date;
+            } catch (NumberFormatException nfe) {
+                return 0l;
+            }
         }
     }
 
