@@ -16,11 +16,14 @@ public class LocationModel {
     // _id
     private long id;
 
-    // location_setting
-    private String locationSetting;
+    // location_id
+    private long locationId;
 
     // city_name
     private String cityName;
+
+    // country_name
+    private String countryName;
 
     // coord_lat
     private double coordLat;
@@ -32,10 +35,11 @@ public class LocationModel {
         // Do nothing
     }
 
-    public LocationModel(long id, String locationSetting, String cityName, double coordLat, double coordLon) {
+    public LocationModel(long id, long locationId, String cityName, String countryName, double coordLat, double coordLon) {
         this.id = id;
-        this.locationSetting = locationSetting;
+        this.locationId = locationId;
         this.cityName = cityName;
+        this.countryName = countryName;
         this.coordLat = coordLat;
         this.coordLon = coordLon;
     }
@@ -48,12 +52,12 @@ public class LocationModel {
         this.id = id;
     }
 
-    public String getLocationSetting() {
-        return locationSetting;
+    public long getLocationId() {
+        return locationId;
     }
 
-    public void setLocationSetting(String locationSetting) {
-        this.locationSetting = locationSetting;
+    public void setLocationId(long locationId) {
+        this.locationId = locationId;
     }
 
     public String getCityName() {
@@ -62,6 +66,14 @@ public class LocationModel {
 
     public void setCityName(String cityName) {
         this.cityName = cityName;
+    }
+
+    public String getCountryName() {
+        return countryName;
+    }
+
+    public void setCountryName(String countryName) {
+        this.countryName = countryName;
     }
 
     public double getCoordLat() {
@@ -83,8 +95,9 @@ public class LocationModel {
     public ContentValues toContentValues() {
         ContentValues values = new ContentValues();
 
-        values.put(WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING, locationSetting);
+        values.put(WeatherContract.LocationEntry.COLUMN_LOCATION_ID, locationId);
         values.put(WeatherContract.LocationEntry.COLUMN_CITY_NAME, cityName);
+        values.put(WeatherContract.LocationEntry.COLUMN_COUNTRY_NAME, countryName);
         values.put(WeatherContract.LocationEntry.COLUMN_COORD_LAT, coordLat);
         values.put(WeatherContract.LocationEntry.COLUMN_COORD_LON, coordLon);
 
@@ -92,13 +105,17 @@ public class LocationModel {
     }
 
     public void loadFromCursor(Cursor cursor) {
-        int _locationSetting = cursor.getColumnIndex(WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING);
+        int _id = cursor.getColumnIndex(WeatherContract.LocationEntry.COLUMN_ID);
+        int _locationId = cursor.getColumnIndex(WeatherContract.LocationEntry.COLUMN_LOCATION_ID);
         int _cityName = cursor.getColumnIndex(WeatherContract.LocationEntry.COLUMN_CITY_NAME);
+        int _countryName = cursor.getColumnIndex(WeatherContract.LocationEntry.COLUMN_COUNTRY_NAME);
         int _coordLat = cursor.getColumnIndex(WeatherContract.LocationEntry.COLUMN_COORD_LAT);
         int _coordLon = cursor.getColumnIndex(WeatherContract.LocationEntry.COLUMN_COORD_LON);
 
-        locationSetting = cursor.getString(_locationSetting);
+        id = cursor.getLong(_id);
+        locationId = cursor.getLong(_locationId);
         cityName = cursor.getString(_cityName);
+        countryName = cursor.getString(_countryName);
         coordLat = cursor.getDouble(_coordLat);
         coordLon = cursor.getDouble(_coordLon);
     }

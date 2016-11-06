@@ -71,6 +71,7 @@ public class HourlyModel extends WeatherModel {
     }
 
     public void loadFromCursor(Cursor cursor) {
+        id = cursor.getLong(WeatherContract.HourlyForecastEntry.COL_ID);
         locationId = cursor.getLong(WeatherContract.HourlyForecastEntry.COL_LOC_KEY);
         weatherId = cursor.getLong(WeatherContract.HourlyForecastEntry.COL_WEATHER_ID);
         dateTime = cursor.getLong(WeatherContract.HourlyForecastEntry.COL_DATE);

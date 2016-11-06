@@ -24,7 +24,7 @@ public class WeatherModel {
     private static final String DATE_FORMAT = "yyyyMMdd";
 
     // _id
-    protected int id;
+    protected long id;
 
     // location_id
     protected long locationId;
@@ -60,7 +60,7 @@ public class WeatherModel {
         // Do nothing
     }
 
-    public WeatherModel(int id, long locationId, int dateTime, long weatherId, String description, double low,
+    public WeatherModel(long id, long locationId, int dateTime, long weatherId, String description, double low,
                         double high, double humidity, double pressure, double windSpeed, double windDirection) {
         this.id = id;
         this.locationId = locationId;
@@ -75,11 +75,11 @@ public class WeatherModel {
         this.windDirection = windDirection;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -341,6 +341,7 @@ public class WeatherModel {
     }
 
     public void loadFromContentValues(ContentValues contentValues) {
+        id = contentValues.getAsLong(WeatherContract.WeatherEntry.COLUMN_ID);
         locationId = contentValues.getAsLong(WeatherContract.WeatherEntry.COLUMN_LOC_KEY);
         weatherId = contentValues.getAsLong(WeatherContract.WeatherEntry.COLUMN_WEATHER_ID);
         dateTime = contentValues.getAsLong(WeatherContract.WeatherEntry.COLUMN_DATE);
@@ -354,26 +355,16 @@ public class WeatherModel {
     }
 
     public void loadFromCursor(Cursor cursor) {
-        int _locationId = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_LOC_KEY);
-        int _weatherId = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_WEATHER_ID);
-        int _dateTime = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_DATE);
-        int _humidity = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_HUMIDITY);
-        int _pressure = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_PRESSURE);
-        int _windSpeed = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_WIND_SPEED);
-        int _windDirection = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_DEGREES);
-        int _high = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_MAX_TEMP);
-        int _low = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_MIN_TEMP);
-        int _description = cursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_SHORT_DESC);
-
-        locationId = cursor.getLong(_locationId);
-        weatherId = cursor.getLong(_weatherId);
-        dateTime = cursor.getLong(_dateTime);
-        humidity = cursor.getDouble(_humidity);
-        pressure = cursor.getDouble(_pressure);
-        windSpeed = cursor.getDouble(_windSpeed);
-        windDirection = cursor.getInt(_windDirection);
-        high = cursor.getDouble(_high);
-        low = cursor.getDouble(_low);
-        description = cursor.getString(_description);
+        id = cursor.getLong(WeatherContract.WeatherEntry.COL_ID);
+        locationId = cursor.getLong(WeatherContract.WeatherEntry.COL_LOC_KEY);
+        weatherId = cursor.getLong(WeatherContract.WeatherEntry.COL_WEATHER_ID);
+        dateTime = cursor.getLong(WeatherContract.WeatherEntry.COL_DATE);
+        humidity = cursor.getDouble(WeatherContract.WeatherEntry.COL_HUMIDITY);
+        pressure = cursor.getDouble(WeatherContract.WeatherEntry.COL_PRESSURE);
+        windSpeed = cursor.getDouble(WeatherContract.WeatherEntry.COL_WIND_SPEED);
+        windDirection = cursor.getInt(WeatherContract.WeatherEntry.COL_DEGREES);
+        high = cursor.getDouble(WeatherContract.WeatherEntry.COL_MAX_TEMP);
+        low = cursor.getDouble(WeatherContract.WeatherEntry.COL_MIN_TEMP);
+        description = cursor.getString(WeatherContract.WeatherEntry.COL_SHORT_DESC);
     }
 }

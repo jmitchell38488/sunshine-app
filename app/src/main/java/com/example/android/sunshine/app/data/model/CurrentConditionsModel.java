@@ -59,6 +59,7 @@ public class CurrentConditionsModel extends WeatherModel {
     }
 
     public void loadFromContentValues(ContentValues contentValues) {
+        id = contentValues.getAsLong(WeatherContract.CurrentConditionsEntry.COLUMN_ID);
         locationId = contentValues.getAsLong(WeatherContract.CurrentConditionsEntry.COLUMN_LOC_KEY);
         weatherId = contentValues.getAsLong(WeatherContract.CurrentConditionsEntry.COLUMN_WEATHER_ID);
         dateTime = contentValues.getAsLong(WeatherContract.CurrentConditionsEntry.COLUMN_DATE);
@@ -73,6 +74,7 @@ public class CurrentConditionsModel extends WeatherModel {
     }
 
     public void loadFromCursor(Cursor cursor) {
+        id = cursor.getLong(WeatherContract.CurrentConditionsEntry.COL_ID);
         locationId = cursor.getLong(WeatherContract.CurrentConditionsEntry.COL_LOC_KEY);
         weatherId = cursor.getLong(WeatherContract.CurrentConditionsEntry.COL_WEATHER_ID);
         dateTime = cursor.getLong(WeatherContract.CurrentConditionsEntry.COL_DATE);
