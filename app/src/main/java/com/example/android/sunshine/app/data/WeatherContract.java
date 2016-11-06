@@ -36,8 +36,9 @@ public class WeatherContract {
             WeatherEntry.TABLE_NAME + "." + WeatherEntry.COLUMN_PRESSURE,
             WeatherEntry.TABLE_NAME + "." + WeatherEntry.COLUMN_WIND_SPEED,
             WeatherEntry.TABLE_NAME + "." + WeatherEntry.COLUMN_DEGREES,
-            LocationEntry.TABLE_NAME + "." + LocationEntry.COLUMN_LOCATION_SETTING,
+            LocationEntry.TABLE_NAME + "." + LocationEntry.COLUMN_LOCATION_ID,
             LocationEntry.TABLE_NAME + "." + LocationEntry.COLUMN_CITY_NAME,
+            LocationEntry.TABLE_NAME + "." + LocationEntry.COLUMN_COUNTRY_NAME,
             LocationEntry.TABLE_NAME + "." + LocationEntry.COLUMN_COORD_LAT,
             LocationEntry.TABLE_NAME + "." + LocationEntry.COLUMN_COORD_LON,
             CurrentConditionsEntry.TABLE_NAME + "." + CurrentConditionsEntry.COLUMN_CUR_TEMP
@@ -54,11 +55,12 @@ public class WeatherContract {
     public static final int COL_WEATHER_PRESSURE = 8;
     public static final int COL_WEATHER_WIND_SPEED = 9;
     public static final int COL_WEATHER_DEGREES = 10;
-    public static final int COL_LOCATION_SETTING = 11;
+    public static final int COL_LOCATION_LOCATION_ID = 11;
     public static final int COL_LOCATION_CITY_NAME = 12;
-    public static final int COL_LOCATION_COORD_LAT = 13;
-    public static final int COL_LOCATION_COORD_LONG = 14;
-    public static final int COL_CUR_TEMP = 15;
+    public static final int COL_LOCATION_COUNTRY_NAME = 13;
+    public static final int COL_LOCATION_COORD_LAT = 14;
+    public static final int COL_LOCATION_COORD_LONG = 15;
+    public static final int COL_CUR_TEMP = 16;
 
     /*
         Inner class that defines the table contents of the location table
@@ -78,24 +80,27 @@ public class WeatherContract {
         public static final String TABLE_NAME = "location";
 
         public static final String COLUMN_ID = "_id";
-        public static final String COLUMN_LOCATION_SETTING = "location_setting";
+        public static final String COLUMN_LOCATION_ID = "location_id";
         public static final String COLUMN_CITY_NAME = "city_name";
+        public static final String COLUMN_COUNTRY_NAME = "country_name";
         public static final String COLUMN_COORD_LAT = "coord_lat";
         public static final String COLUMN_COORD_LON = "coord_long";
 
         public static final String[] PROJECTION = {
                 WeatherContract.LocationEntry.COLUMN_ID,
-                WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING,
+                WeatherContract.LocationEntry.COLUMN_LOCATION_ID,
                 WeatherContract.LocationEntry.COLUMN_CITY_NAME,
+                WeatherContract.LocationEntry.COLUMN_COUNTRY_NAME,
                 WeatherContract.LocationEntry.COLUMN_COORD_LAT,
                 WeatherContract.LocationEntry.COLUMN_COORD_LON
         };
 
         public static final int COL_LOCATION_ID = 0;
-        public static final int COL_LOCATION_SETTING = 1;
+        public static final int COL_LOCATION_LOCATION_ID = 1;
         public static final int COL_LOCATION_CITY_NAME = 2;
-        public static final int COL_LOCATION_COORD_LAT = 3;
-        public static final int COL_LOCATION_COORD_LONG = 4;
+        public static final int COL_LOCATION_COUNTRY_NAME = 3;
+        public static final int COL_LOCATION_COORD_LAT = 4;
+        public static final int COL_LOCATION_COORD_LONG = 5;
 
         public static Uri buildLocationUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
@@ -284,44 +289,36 @@ public class WeatherContract {
     /* Inner class that defines the table contents of the weather table */
     public static final class WeatherEntry implements BaseColumns {
 
-        public static final Uri CONTENT_URI =
-                BASE_CONTENT_URI.buildUpon().appendPath(PATH_WEATHER).build();
+        public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_WEATHER).build();
 
-        public static final String CONTENT_TYPE =
-                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_WEATHER;
-        public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_WEATHER;
+        public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_WEATHER;
+        public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_WEATHER;
 
         public static final String TABLE_NAME = "weather";
 
-        // Column with the foreign key into the location table.
+        public static final String COLUMN_ID = "_id";
         public static final String COLUMN_LOC_KEY = "location_id";
-
-        // Date, stored as long in milliseconds since the epoch
         public static final String COLUMN_DATE = "date";
-
-        // Weather id as returned by API, to identify the icon to be used
         public static final String COLUMN_WEATHER_ID = "weather_id";
-
-        // Short description and long description of the weather, as provided by API.
-        // e.g "clear" vs "sky is clear".
         public static final String COLUMN_SHORT_DESC = "short_desc";
-
-        // Min and max temperatures for the day (stored as floats)
         public static final String COLUMN_MIN_TEMP = "min";
         public static final String COLUMN_MAX_TEMP = "max";
-
-        // Humidity is stored as a float representing percentage
         public static final String COLUMN_HUMIDITY = "humidity";
-
-        // Humidity is stored as a float representing percentage
         public static final String COLUMN_PRESSURE = "pressure";
-
-        // Windspeed is stored as a float representing windspeed  mph
         public static final String COLUMN_WIND_SPEED = "wind";
-
-        // Degrees are meteorological degrees (e.g, 0 is north, 180 is south).  Stored as floats.
         public static final String COLUMN_DEGREES = "degrees";
+
+        public static final int COL_ID = 0;
+        public static final int COL_LOC_KEY = 1;
+        public static final int COL_WEATHER_ID = 2;
+        public static final int COL_DATE = 3;
+        public static final int COL_SHORT_DESC = 4;
+        public static final int COL_MIN_TEMP = 5;
+        public static final int COL_MAX_TEMP = 6;
+        public static final int COL_HUMIDITY = 7;
+        public static final int COL_PRESSURE = 8;
+        public static final int COL_WIND_SPEED = 9;
+        public static final int COL_DEGREES = 10;
 
         public static Uri buildWeatherUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);

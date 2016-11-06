@@ -73,8 +73,9 @@ public class WeatherDbHelper extends SQLiteOpenHelper {
                 LocationEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
 
                 // the ID of the location entry associated with this weather data
-                LocationEntry.COLUMN_LOCATION_SETTING + " TEXT NOT NULL, " +
+                LocationEntry.COLUMN_LOCATION_ID + " INTEGER NOT NULL, " +
                 LocationEntry.COLUMN_CITY_NAME + " TEXT NOT NULL, " +
+                LocationEntry.COLUMN_COUNTRY_NAME + " TEXT NOT NULL, " +
                 LocationEntry.COLUMN_COORD_LAT + " REAL NOT NULL, " +
                 LocationEntry.COLUMN_COORD_LON + " REAL NOT NULL);";
 
@@ -82,7 +83,7 @@ public class WeatherDbHelper extends SQLiteOpenHelper {
     }
 
     private void createCurrentConditionsEntryTable(SQLiteDatabase sqLiteDatabase) {
-        final String SQL_CREATE_LOCATION_TABLE = "CREATE TABLE " + CurrentConditionsEntry.TABLE_NAME + " (" +
+        final String SQL_CREATE_CURRENT_TABLE = "CREATE TABLE " + CurrentConditionsEntry.TABLE_NAME + " (" +
                 // Why AutoIncrement here, and not above?
                 // Unique keys will be auto-generated in either case.  But for weather
                 // forecasting, it's reasonable to assume the user will want information
@@ -114,32 +115,32 @@ public class WeatherDbHelper extends SQLiteOpenHelper {
                 " UNIQUE (" + CurrentConditionsEntry.COLUMN_DATE + ", " +
                 CurrentConditionsEntry.COLUMN_LOC_KEY + ") ON CONFLICT REPLACE);";
 
-        sqLiteDatabase.execSQL(SQL_CREATE_LOCATION_TABLE);
+        sqLiteDatabase.execSQL(SQL_CREATE_CURRENT_TABLE);
     }
 
     private void createHourlyConditionsEntryTable(SQLiteDatabase sqLiteDatabase) {
-        final String SQL_CREATE_LOCATION_TABLE = "CREATE TABLE " + HourlyForecastEntry.TABLE_NAME + " (" +
+        final String SQL_CREATE_HOURLY_TABLE = "CREATE TABLE " + HourlyForecastEntry.TABLE_NAME + " (" +
                 // Why AutoIncrement here, and not above?
                 // Unique keys will be auto-generated in either case.  But for weather
                 // forecasting, it's reasonable to assume the user will want information
                 // for a certain date and all dates *following*, so the forecast data
                 // should be sorted accordingly.
-                CurrentConditionsEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                HourlyForecastEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
 
                 // the ID of the location entry associated with this weather data
-                CurrentConditionsEntry.COLUMN_LOC_KEY + " INTEGER NOT NULL, " +
-                CurrentConditionsEntry.COLUMN_DATE + " INTEGER NOT NULL, " +
-                CurrentConditionsEntry.COLUMN_SHORT_DESC + " TEXT NOT NULL, " +
-                CurrentConditionsEntry.COLUMN_WEATHER_ID + " INTEGER NOT NULL," +
+                HourlyForecastEntry.COLUMN_LOC_KEY + " INTEGER NOT NULL, " +
+                HourlyForecastEntry.COLUMN_DATE + " INTEGER NOT NULL, " +
+                HourlyForecastEntry.COLUMN_SHORT_DESC + " TEXT NOT NULL, " +
+                HourlyForecastEntry.COLUMN_WEATHER_ID + " INTEGER NOT NULL," +
 
-                CurrentConditionsEntry.COLUMN_CUR_TEMP + " REAL NOT NULL, " +
-                CurrentConditionsEntry.COLUMN_MIN_TEMP + " REAL NOT NULL, " +
-                CurrentConditionsEntry.COLUMN_MAX_TEMP + " REAL NOT NULL, " +
+                HourlyForecastEntry.COLUMN_CUR_TEMP + " REAL NOT NULL, " +
+                HourlyForecastEntry.COLUMN_MIN_TEMP + " REAL NOT NULL, " +
+                HourlyForecastEntry.COLUMN_MAX_TEMP + " REAL NOT NULL, " +
 
-                CurrentConditionsEntry.COLUMN_HUMIDITY + " REAL NOT NULL, " +
-                CurrentConditionsEntry.COLUMN_PRESSURE + " REAL NOT NULL, " +
-                CurrentConditionsEntry.COLUMN_WIND_SPEED + " REAL NOT NULL, " +
-                CurrentConditionsEntry.COLUMN_DEGREES + " REAL NOT NULL, " +
+                HourlyForecastEntry.COLUMN_HUMIDITY + " REAL NOT NULL, " +
+                HourlyForecastEntry.COLUMN_PRESSURE + " REAL NOT NULL, " +
+                HourlyForecastEntry.COLUMN_WIND_SPEED + " REAL NOT NULL, " +
+                HourlyForecastEntry.COLUMN_DEGREES + " REAL NOT NULL, " +
 
                 // Set up the location column as a foreign key to location table.
                 " FOREIGN KEY (" + HourlyForecastEntry.COLUMN_LOC_KEY + ") REFERENCES " +
@@ -150,7 +151,7 @@ public class WeatherDbHelper extends SQLiteOpenHelper {
                 " UNIQUE (" + HourlyForecastEntry.COLUMN_DATE + ", " +
                 HourlyForecastEntry.COLUMN_LOC_KEY + ") ON CONFLICT REPLACE);";
 
-        sqLiteDatabase.execSQL(SQL_CREATE_LOCATION_TABLE);
+        sqLiteDatabase.execSQL(SQL_CREATE_HOURLY_TABLE);
     }
 
     @Override
